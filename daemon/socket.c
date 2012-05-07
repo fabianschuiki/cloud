@@ -2,11 +2,15 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stddef.h>
 
+#include "util.h"
 #include "socket.h"
 
 
@@ -20,39 +24,37 @@ struct cld_socket {
 struct cld_socket *
 cld_socket_create (cld_socket_type_t type)
 {
-	struct cld_socket *socket;
+	struct cld_socket *sock;
 	
-	socket = malloc(sizeof *socket);
-	if (socket == NULL)
+	sock = malloc(sizeof *sock);
+	if (sock == NULL)
 		return NULL;
 	
-	socket->type = type;
-	
-	socket->fd = socket(PF_LOCAL, SOCK_STREAM, 0);
-	if (socket->fd < 0) {
+	sock->fd = socket(PF_LOCAL, SOCK_STREAM, 0);
+	if (sock->fd < 0) {
 		error("socket");
-		free(socket);
+		free(sock);
 		return NULL;
 	}
 	
 	const char * name = NULL;
-	switch (socket->type) {
+	switch (type) {
 		case CLD_SOCKET_CLIENT:  name = "/tmp/cloud.sock"; break;
 		case CLD_SOCKET_SERVICE: name = "/tmp/cloud.service.sock"; break;
 	}
 	if (name == NULL) {
 		fprintf(stderr, "%s: socket type %d not supported\n", __FUNCTION__, type);
-		close(socket->fd);
-		free(socket);
+		close(sock->fd);
+		free(sock);
 		return NULL;
 	}
 	
-	memset(socket->addr, 0, sizeof socket->addr);
-	socket->addr.sun_family = AF_LOCAL;
-	size_t name_size = strcpy(socket->addr.sun_path, name);
-	socket->addr_size = offsetof(struct sockaddr_un, sun_path) + name_size;
+	memset(&sock->addr, 0, sizeof sock->addr);
+	sock->addr.sun_family = AF_LOCAL;
+	strcpy(sock->addr.sun_path, name);
+	sock->addr_size = offsetof(struct sockaddr_un, sun_path) + strlen(sock->addr.sun_path) + 1;
 	
-	return socket;
+	return sock;
 }
 
 void
@@ -67,6 +69,8 @@ cld_socket_destroy (struct cld_socket* socket)
 int
 cld_socket_listen (struct cld_socket *socket)
 {
+	printf("listening on %s\n", socket->addr.sun_path);
+	
 	if (bind(socket->fd, (struct sockaddr *) &socket->addr, socket->addr_size) < 0) {
 		error("bind");
 		close(socket->fd);
@@ -86,6 +90,8 @@ cld_socket_listen (struct cld_socket *socket)
 int
 cld_socket_connect (struct cld_socket *socket)
 {
+	printf("connecting to %s\n", socket->addr.sun_path);
+	
 	if (connect(socket->fd, (struct sockaddr *) &socket->addr, socket->addr_size) < 0) {
 		error("connect");
 		close(socket->fd);

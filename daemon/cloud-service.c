@@ -12,7 +12,6 @@ struct cld_daemon {
 	struct cld_socket *socket;
 };
 
-/// Tries to connect to the cloud daemon.
 struct cld_daemon *
 cld_daemon_connect ()
 {
