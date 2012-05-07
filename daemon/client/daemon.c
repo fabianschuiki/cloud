@@ -3,19 +3,18 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "daemon.h"
-#include "../cloud-service-private.h"
+#include "../connection.h"
 #include "../socket.h"
 #include "../event-loop.h"
-#include "../connection.h"
-#include "../protocol.h"
+#include "../cloud-client-private.h"
 
 
 struct cld_daemon {
-	struct cld_service *service;
+	struct cld_client *client;
 	struct cld_socket *socket;
 	struct cld_event_source *source;
 	struct cld_connection *connection;
@@ -44,7 +43,7 @@ message_received (int op, void *message, size_t length, void *data)
 }
 
 struct cld_daemon *
-cld_daemon_connect (struct cld_service *service)
+cld_daemon_connect(struct cld_client *client)
 {
 	struct cld_daemon *daemon;
 	
@@ -53,9 +52,9 @@ cld_daemon_connect (struct cld_service *service)
 		return NULL;
 	
 	memset(daemon, 0, sizeof *daemon);
-	daemon->service = service;
+	daemon->client = client;
 	
-	daemon->socket = cld_socket_create(CLD_SOCKET_SERVICE);
+	daemon->socket = cld_socket_create(CLD_SOCKET_CLIENT);
 	if (daemon->socket == NULL) {
 		free(daemon);
 		return NULL;
@@ -74,7 +73,7 @@ cld_daemon_connect (struct cld_service *service)
 		return NULL;
 	}
 	
-	daemon->source = cld_event_loop_add_fd(service->loop, cld_socket_get_fd(daemon->socket), CLD_EVENT_READABLE, socket_data, daemon);
+	daemon->source = cld_event_loop_add_fd(client->loop, cld_socket_get_fd(daemon->socket), CLD_EVENT_READABLE, socket_data, daemon);
 	if (daemon->source == NULL) {
 		cld_socket_destroy(daemon->socket);
 		free(daemon);
@@ -85,26 +84,10 @@ cld_daemon_connect (struct cld_service *service)
 }
 
 void
-cld_daemon_disconnect (struct cld_daemon *daemon)
+cld_daemon_disconnect(struct cld_daemon *daemon)
 {
 	cld_event_source_remove(daemon->source);
 	cld_connection_destroy(daemon->connection);
 	cld_socket_destroy(daemon->socket);
 	free(daemon);
-}
-
-
-int
-cld_daemon_send_service_record (struct cld_daemon *daemon, const char *name)
-{
-	struct cld_service_record record;
-	record.name_len = strlen(name);
-	
-	size_t len = sizeof record + record.name_len;
-	void *data = malloc(len);
-	void *ptr = data;
-	memcpy(ptr, &record, sizeof record); ptr += sizeof record;
-	memcpy(ptr, name, record.name_len); ptr += record.name_len;
-	
-	return cld_connection_write(daemon->connection, CLD_OP_SERVICE_RECORD, data, len);
 }

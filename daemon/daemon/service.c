@@ -30,8 +30,6 @@ socket_data (int fd, int mask, void *data)
 	return len;
 }
 
-
-
 /** Called by the service's connection whenever a message is received. */
 static int
 message_received (int op, void *message, size_t length, void *data)

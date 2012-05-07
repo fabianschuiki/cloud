@@ -10,12 +10,10 @@ extern "C" {
 #endif
 
 
-struct cld_daemon;
+struct cld_client;
 
-struct cld_daemon *cld_daemon_connect();
-void cld_daemon_disconnect(struct cld_daemon *daemon);
-
-void cld_daemon_get_services(struct cld_daemon *daemon);
+struct cld_client *cld_client_create();
+void cld_client_destroy(struct cld_client *client);
 
 
 #ifdef __cplusplus

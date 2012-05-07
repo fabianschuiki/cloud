@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	buffer[s] = 0;
 	printf("read %s\n", buffer);*/
 	
-	struct cld_daemon *d;
+	/*struct cld_daemon *d;
 	d = cld_daemon_connect();
 	if (d == NULL)
 		return -1;
@@ -41,9 +41,9 @@ int main(int argc, char *argv[])
 	printf("connected to daemon\n");
 	
 	//Fetch a list of available services.
-	cld_daemon_get_services(d);
+	//cld_daemon_get_services(d);
 	
-	cld_daemon_disconnect(d);
+	cld_daemon_disconnect(d);*/
 	
 	return 0;
 }

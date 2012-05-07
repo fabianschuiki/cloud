@@ -8,7 +8,10 @@ add_executable(cloudd
 
 add_library(cloud
 	cloud-client
-	connection)
+	socket
+	event-loop
+	connection
+	client/daemon)
 
 add_library(cloud-service
 	cloud-service
