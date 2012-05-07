@@ -1,4 +1,4 @@
-set(sources cloud-daemon)
+set(sources cloud-daemon event-loop)
 
 include_directories(lib)
 
