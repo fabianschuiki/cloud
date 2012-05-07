@@ -5,7 +5,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "library.h"
+#include "cloud-client.h"
 
 
 int main(int argc, char *argv[])

@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "util.h"
-#include "library.h"
+#include "cloud-client.h"
 #include "private.h"
 
 

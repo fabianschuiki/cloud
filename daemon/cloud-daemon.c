@@ -13,7 +13,7 @@
 #include <signal.h>
 
 #include "util.h"
-#include "daemon.h"
+#include "cloud-daemon.h"
 #include "private.h"
 
 

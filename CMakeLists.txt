@@ -3,3 +3,4 @@ project(cloud)
 
 add_subdirectory(daemon)
 add_subdirectory(test)
+add_subdirectory(service-debug)
