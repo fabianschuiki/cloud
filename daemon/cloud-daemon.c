@@ -15,16 +15,12 @@
 #include "util.h"
 #include "cloud-daemon.h"
 #include "private.h"
+#include "socket.h"
 
-
-struct cld_socket {
-	int fd;
-	struct sockaddr_un addr;
-	struct cld_event_source *source;
-};
 
 struct cld_daemon {
-	struct cld_socket *socket;
+	struct cld_socket *client_socket;
+	struct cld_socket *service_socket;
 	struct cld_event_loop *loop;
 	int run;
 };
@@ -55,11 +51,12 @@ void
 cld_daemon_destroy (struct cld_daemon *d)
 {
 	cld_event_loop_destroy(d->loop);
-	
+	cld_socket_destroy(d->client_socket);
+	cld_socket_destroy(d->service_socket);
 	free(d);
 }
 
-int
+/*int
 socket_data (int fd, int mask, void *data)
 {
 	struct cld_daemon * daemon = data;
@@ -73,64 +70,38 @@ socket_data (int fd, int mask, void *data)
 		cld_client_create(daemon, client_fd);
 	
 	return 1;
-}
+}*/
 
 int
-cld_daemon_socket_open (struct cld_daemon *d)
+cld_daemon_socket_client_open (struct cld_daemon *daemon)
 {
-	struct cld_socket *s;
-	
-	s = malloc(sizeof *s);
-	if (s == NULL)
+	daemon->client_socket = cld_socket_create(CLD_SOCKET_CLIENT);
+	if (daemon->client_socket == NULL)
 		return -1;
 	
-	s->fd = socket(PF_LOCAL, SOCK_STREAM, 0);
-	if (s->fd < 0) {
-		free(s);
+	if (cld_socket_listen(daemon->client_socket) < 0) {
+		cld_socket_destroy(daemon->client_socket);
+		daemon->client_socket = NULL;
 		return -1;
 	}
-	
-	memset(&s->addr, 0, sizeof s->addr);
-	s->addr.sun_family = AF_LOCAL;
-	socklen_t name_size = snprintf(s->addr.sun_path, sizeof s->addr.sun_path, "%s/%s", "/tmp", "cloud.socket") + 1;
-	printf("using socket %s\n", s->addr.sun_path);
-	
-	socklen_t size = offsetof(struct sockaddr_un, sun_path) + name_size;
-	if (bind(s->fd, (struct sockaddr *) &s->addr, size) < 0) {
-		error("bind");
-		close(s->fd);
-		free(s);
-		return -1;
-	}
-	
-	if (listen(s->fd, 1) < 0) {
-		error("listen");
-		close(s->fd);
-		unlink(s->addr.sun_path);
-		free(s);
-		return -1;
-	}
-	
-	s->source = cld_event_loop_add_fd(d->loop, s->fd, CLD_EVENT_READABLE, socket_data, d);
-	if (s->source == NULL) {
-		close(s->fd);
-		unlink(s->addr.sun_path);
-		free(s);
-		return -1;
-	}
-	
-	d->socket = s;
 	
 	return 0;
 }
 
-void
-cld_daemon_socket_close (struct cld_daemon *d)
+int
+cld_daemon_socket_service_open (struct cld_daemon *daemon)
 {
-	close(d->socket->fd);
-	unlink(d->socket->addr.sun_path);
-	free(d->socket);
-	d->socket = NULL;
+	daemon->service_socket = cld_socket_create(CLD_SOCKET_SERVICE);
+	if (daemon->service_socket == NULL)
+		return -1;
+	
+	if (cld_socket_listen(daemon->service_socket) < 0) {
+		cld_socket_destroy(daemon->service_socket);
+		daemon->service_socket = NULL;
+		return -1;
+	}
+	
+	return 0;
 }
 
 struct cld_event_loop *
@@ -148,7 +119,7 @@ struct cld_client {
 
 
 int
-cld_client_connection_data (int fd, int mask, void *data)
+client_connection_data (int fd, int mask, void *data)
 {
 	struct cld_client *client = data;
 	struct cld_connection *connection = client->connection;
@@ -161,7 +132,7 @@ cld_client_connection_data (int fd, int mask, void *data)
 	
 	int len = cld_connection_data(connection, cmask);
 	if (len < 0) {
-		cld_client_destroy(client);
+		//cld_client_destroy(client);
 		return 1;
 	}
 	
@@ -169,7 +140,7 @@ cld_client_connection_data (int fd, int mask, void *data)
 }
 
 int
-cld_client_connection_update (struct cld_connection *connection, int mask, void *data)
+client_connection_update (struct cld_connection *connection, int mask, void *data)
 {
 	struct cld_client *client = data;
 	
@@ -182,7 +153,7 @@ cld_client_connection_update (struct cld_connection *connection, int mask, void 
 	return cld_event_source_fd_update(client->source, emask);
 }
 
-struct cld_client *
+/*struct cld_client *
 cld_client_create (struct cld_daemon *daemon, int fd)
 {
 	struct cld_client *client;
@@ -217,7 +188,7 @@ void cld_client_destroy (struct cld_client *client)
 	
 	cld_event_source_remove(client->source);
 	free(client);
-}
+}*/
 
 
 int
@@ -230,43 +201,29 @@ signal_quit (int signal_number, void *data)
 
 int main(int argc, char* argv[])
 {
-	struct cld_daemon * d;
+	struct cld_daemon * daemon;
 	
-	d = cld_daemon_create();
-	if (d == NULL)
+	daemon = cld_daemon_create();
+	if (daemon == NULL)
 		return -1;
 	
-	if (cld_daemon_socket_open(d) < 0)
+	if (cld_daemon_socket_client_open(daemon) < 0)
+		return -1;
+	if (cld_daemon_socket_service_open(daemon) < 0)
 		return -1;
 	
-	cld_event_loop_add_signal(d->loop, SIGTERM, signal_quit, d);
-	cld_event_loop_add_signal(d->loop, SIGQUIT, signal_quit, d);
-	cld_event_loop_add_signal(d->loop, SIGINT, signal_quit, d);
+	cld_event_loop_add_signal(daemon->loop, SIGTERM, signal_quit, daemon);
+	cld_event_loop_add_signal(daemon->loop, SIGQUIT, signal_quit, daemon);
+	cld_event_loop_add_signal(daemon->loop, SIGINT, signal_quit, daemon);
 	
-	while (d->run) {
-		if (cld_event_loop_dispatch(d->loop) < 0)
+	while (daemon->run) {
+		if (cld_event_loop_dispatch(daemon->loop) < 0)
 			return -1;
 	}
 	
-	/*printf("listening on socket %s\n", s->addr.sun_path);
-	
-	while (1) {
-		struct sockaddr_un name;
-		socklen_t length = sizeof(name);
-		int client_fd = accept(s->fd, (struct sockaddr *) &name, &length);
-		if (client_fd < 0)
-			perror("accept");
-		else {
-			printf("accepted connection\n");
-			write(client_fd, "Hello\n", 6);
-			close(client_fd);
-		}
-	}*/
-	
 	printf("terminating cloud daemon\n");
 	
-	cld_daemon_socket_close(d);
-	cld_daemon_destroy(d);
+	cld_daemon_destroy(daemon);
 	
 	return 0;
 }
