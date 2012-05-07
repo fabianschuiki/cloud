@@ -11,5 +11,7 @@ struct cld_daemon;
 struct cld_daemon *cld_daemon_connect();
 void cld_daemon_disconnect(struct cld_daemon *daemon);
 
+int cld_daemon_send_service_record(struct cld_daemon *daemon, const char *name);
+
 
 #endif

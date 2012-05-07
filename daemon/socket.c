@@ -18,6 +18,7 @@ struct cld_socket {
 	int fd;
 	struct sockaddr_un addr;
 	size_t addr_size;
+	int listen;
 };
 
 struct cld_socket *
@@ -28,6 +29,8 @@ cld_socket_create (cld_socket_type_t type)
 	sock = malloc(sizeof *sock);
 	if (sock == NULL)
 		return NULL;
+	
+	sock->listen = 0;
 	
 	sock->fd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	if (sock->fd < 0) {
@@ -60,7 +63,8 @@ void
 cld_socket_destroy (struct cld_socket* socket)
 {
 	close(socket->fd);
-	unlink(socket->addr.sun_path);
+	if (socket->listen)
+		unlink(socket->addr.sun_path);
 	free(socket);
 }
 
@@ -69,6 +73,7 @@ int
 cld_socket_listen (struct cld_socket *socket)
 {
 	printf("listening on %s\n", socket->addr.sun_path);
+	socket->listen = 1;
 	
 	if (bind(socket->fd, (struct sockaddr *) &socket->addr, socket->addr_size) < 0) {
 		error("bind");

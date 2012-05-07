@@ -13,6 +13,7 @@ struct cld_service {
 	int fd;
 	struct cld_event_source *source;
 	struct cld_connection *connection;
+	char *name;
 };
 
 struct cld_service *cld_service_create(struct cld_daemon *daemon, int fd);

@@ -61,6 +61,8 @@ cld_service_run (struct cld_service *service)
 	cld_event_loop_add_signal(service->loop, SIGQUIT, signal_terminate, service);
 	cld_event_loop_add_signal(service->loop, SIGINT, signal_terminate, service);
 	
+	cld_daemon_send_service_record(service->daemon, service->name);
+	
 	while (service->run) {
 		if (cld_event_loop_dispatch(service->loop) < 0)
 			return -1;
