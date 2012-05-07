@@ -19,4 +19,6 @@ void cld_socket_destroy(struct cld_socket *socket);
 int cld_socket_listen(struct cld_socket *socket);
 int cld_socket_connect(struct cld_socket *socket);
 
+int cld_socket_get_fd(struct cld_socket *socket);
+
 #endif

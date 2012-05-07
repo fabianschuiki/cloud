@@ -14,16 +14,11 @@
 
 #include "util.h"
 #include "cloud-daemon.h"
+#include "event-loop.h"
 #include "private.h"
 #include "socket.h"
-
-
-struct cld_daemon {
-	struct cld_socket *client_socket;
-	struct cld_socket *service_socket;
-	struct cld_event_loop *loop;
-	int run;
-};
+#include "daemon/client.h"
+#include "daemon/service.h"
 
 
 struct cld_daemon *
@@ -72,6 +67,39 @@ socket_data (int fd, int mask, void *data)
 	return 1;
 }*/
 
+static int
+client_data (int fd, int mask, void *data)
+{
+	struct cld_daemon *daemon = data;
+	
+	struct sockaddr_un name;
+	socklen_t length = sizeof name;
+	int client_fd = accept(fd, (struct sockaddr *) &name, &length);
+	if (client_fd < 0) {
+		error("accept");
+		return -1;
+	}
+	
+	//cld_client_create(daemon, client_fd);
+}
+
+static int
+service_data (int fd, int mask, void *data)
+{
+	struct cld_daemon *daemon = data;
+	
+	struct sockaddr_un name;
+	socklen_t length = sizeof name;
+	int service_fd = accept(fd, (struct sockaddr *) &name, &length);
+	if (service_fd < 0) {
+		error("accept");
+		return -1;
+	}
+	
+	cld_service_create(daemon, service_fd);
+}
+
+/** Opens the socket clients use to connect to the daemon and adds it to the event loop. */
 int
 cld_daemon_socket_client_open (struct cld_daemon *daemon)
 {
@@ -85,9 +113,23 @@ cld_daemon_socket_client_open (struct cld_daemon *daemon)
 		return -1;
 	}
 	
+	//Add the socket to the event loop so we are notified when new connections arrive.
+	daemon->client_source = cld_event_loop_add_fd(
+		daemon->loop,
+		cld_socket_get_fd(daemon->client_socket),
+		CLD_EVENT_READABLE,
+		client_data,
+		daemon);
+	if (daemon->client_source == NULL) {
+		cld_socket_destroy(daemon->client_socket);
+		daemon->client_socket = NULL;
+		return -1;
+	}
+	
 	return 0;
 }
 
+/** Opens the socket services use to connect to the daemon and adds it to the event loop. */
 int
 cld_daemon_socket_service_open (struct cld_daemon *daemon)
 {
@@ -101,24 +143,24 @@ cld_daemon_socket_service_open (struct cld_daemon *daemon)
 		return -1;
 	}
 	
+	//Add the socket to the event loop so we are notified when new connections arrive.
+	daemon->service_source = cld_event_loop_add_fd(
+		daemon->loop,
+		cld_socket_get_fd(daemon->service_socket),
+		CLD_EVENT_READABLE,
+		service_data,
+		daemon);
+	if (daemon->service_source == NULL) {
+		cld_socket_destroy(daemon->service_socket);
+		daemon->service_socket = NULL;
+		return -1;
+	}
+	
 	return 0;
 }
 
-struct cld_event_loop *
-cld_daemon_get_event_loop (struct cld_daemon *daemon)
-{
-	return daemon->loop;
-}
 
-
-struct cld_client {
-	struct cld_daemon *daemon;
-	struct cld_connection *connection;
-	struct cld_event_source *source;
-};
-
-
-int
+/*int
 client_connection_data (int fd, int mask, void *data)
 {
 	struct cld_client *client = data;
@@ -151,7 +193,7 @@ client_connection_update (struct cld_connection *connection, int mask, void *dat
 		emask |= CLD_EVENT_WRITABLE;
 	
 	return cld_event_source_fd_update(client->source, emask);
-}
+}*/
 
 /*struct cld_client *
 cld_client_create (struct cld_daemon *daemon, int fd)

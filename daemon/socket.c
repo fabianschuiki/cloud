@@ -18,7 +18,6 @@ struct cld_socket {
 	int fd;
 	struct sockaddr_un addr;
 	size_t addr_size;
-	struct cld_event_source *source;
 };
 
 struct cld_socket *
@@ -99,4 +98,10 @@ cld_socket_connect (struct cld_socket *socket)
 	}
 	
 	return 0;
+}
+
+int
+cld_socket_get_fd (struct cld_socket *socket)
+{
+	return socket->fd;
 }

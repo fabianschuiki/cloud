@@ -7,18 +7,19 @@
 #include <unistd.h>
 
 #include "util.h"
-#include "private.h"
+#include "connection.h"
+#include "event-loop.h"
 
 
 struct cld_connection {
 	int fd;
-	cld_connection_update_func_t update;
+	cld_connection_message_func_t message;
 	void *data;
 };
 
 
 struct cld_connection *
-cld_connection_create (int fd, cld_connection_update_func_t update,  void *data)
+cld_connection_create (int fd, cld_connection_message_func_t message, void *data)
 {
 	struct cld_connection *connection;
 	
@@ -27,7 +28,7 @@ cld_connection_create (int fd, cld_connection_update_func_t update,  void *data)
 		return NULL;
 	
 	connection->fd = fd;
-	connection->update = update;
+	connection->message = message;
 	connection->data = data;
 	
 	return connection;
@@ -42,13 +43,13 @@ cld_connection_destroy (struct cld_connection *connection)
 int
 cld_connection_data (struct cld_connection *connection, int mask)
 {
-	if (mask & CLD_CONNECTION_WRITABLE) {
+	if (mask & CLD_EVENT_WRITABLE) {
 		printf("updating writable connection\n");
-		connection->update(connection, CLD_CONNECTION_READABLE, connection->data);
+		//connection->update(connection, CLD_EVENT_READABLE, connection->data);
 		return 0;
 	}
 	
-	if (mask & CLD_CONNECTION_READABLE) {
+	if (mask & CLD_EVENT_READABLE) {
 		printf("received data\n");
 		char buffer[1024];
 		int len = read(connection->fd, buffer, 1023);

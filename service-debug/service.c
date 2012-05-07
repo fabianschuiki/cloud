@@ -16,9 +16,11 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	//Do something useful here.
-	sleep(3);
+	//Configure the service.
+	cld_service_set_name(service, "debug");
 	
+	int res = cld_service_run(service);
 	cld_service_destroy(service);
-	return 0;
+	
+	return res;
 }

@@ -11,7 +11,7 @@
 #include <sys/signalfd.h>
 
 #include "util.h"
-#include "cloud-daemon.h"
+#include "event-loop.h"
 
 
 struct cld_event_source_interface {
