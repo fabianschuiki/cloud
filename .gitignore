@@ -1,0 +1,7 @@
+*~
+/build/*
+.*
+!.gitignore
+
+*.kdev4
+*.anjuta
