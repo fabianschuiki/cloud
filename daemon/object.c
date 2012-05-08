@@ -134,6 +134,10 @@ add_field (struct cld_object *object, struct cld_field *field)
 }
 
 
+/** Sets the value of the object's field with the given name. Overwrites what-
+ * ever is in the field at the moment. By adding an object the caller hands off
+ * responsibility to free the object; field values are automatically freed
+ * whenever they're overwritten or the parent object gets destroyed. */
 void
 cld_object_set_field (struct cld_object *object, const char *name, struct cld_object *value)
 {
@@ -151,6 +155,9 @@ cld_object_set_field (struct cld_object *object, const char *name, struct cld_ob
 	cld_field_set_object(field, value);
 }
 
+/** Returns the value of the object's field with the given name. Returns NULL
+ * if the field does not exist. Note that if the field is set to NULL the
+ * function will also return NULL. */
 struct cld_object *
 cld_object_get_field (struct cld_object *object, const char *name)
 {
@@ -179,7 +186,7 @@ print (struct cld_object *object, int indent)
 	
 	char in[128];
 	int i;
-	for (i = 0; i < indent * 4; i++)
+	for (i = 0; i < indent * 4 && i < 127; i++)
 		in[i] = ' ';
 	in[i] = 0;
 	
@@ -195,6 +202,7 @@ print (struct cld_object *object, int indent)
 	printf("\n%s}", in);
 }
 
+/** Dumps the object to standard output. Nice for debugging. */
 void
 cld_object_print (struct cld_object *object)
 {
@@ -203,6 +211,7 @@ cld_object_print (struct cld_object *object)
 }
 
 
+/* Serializes the given object into the buffer. The object may be NULL. */
 static int
 serialize (struct cld_object *object, struct cld_buffer *buffer)
 {
