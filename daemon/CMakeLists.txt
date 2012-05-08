@@ -4,6 +4,8 @@ add_executable(cloud-daemon
 	daemon/client
 	daemon/service
 	event-loop
+	object
+	buffer
 	connection)
 
 add_library(cloud
@@ -11,6 +13,8 @@ add_library(cloud
 	socket
 	event-loop
 	connection
+	object
+	buffer
 	client/daemon)
 
 add_library(cloud-service
@@ -18,4 +22,6 @@ add_library(cloud-service
 	socket
 	event-loop
 	connection
+	object
+	buffer
 	service/daemon)
