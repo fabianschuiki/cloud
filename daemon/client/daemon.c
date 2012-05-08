@@ -35,10 +35,11 @@ socket_data (int fd, int mask, void *data)
 }
 
 static int
-message_received (int op, void *message, size_t length, void *data)
+message_received (struct cld_object *object, void *data)
 {
 	struct cld_service *daemon = data;
-	printf("daemon %p sent message %d of %d bytes\n", daemon, op, (int)length);
+	printf("daemon %p sent ", daemon);
+	cld_object_print(object);
 	return 1;
 }
 

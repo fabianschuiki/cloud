@@ -11,6 +11,7 @@
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
+#include "../cloud-client.h"
 
 
 /** Called by the event loop whenever there is traffic on the client's socket.
@@ -32,10 +33,12 @@ socket_data (int fd, int mask, void *data)
 
 /** Called by the client's connection whenever a message is received. */
 static int
-message_received (int op, void *message, size_t length, void *data)
+message_received (struct cld_object *object, void *data)
 {
 	struct cld_client *client = data;
-	printf("client %p received message %d of %d bytes\n", client, op, (int)length);
+	printf("client %p sent ", client);
+	cld_object_print(object);
+	cld_object_destroy(object);
 	return 1;
 }
 

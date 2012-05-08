@@ -334,8 +334,8 @@ unserialize (const void **data, size_t length)
 
 /** Reconstructs the object from the given bytes. */
 struct cld_object *
-cld_object_unserialize (struct cld_buffer *buffer)
+cld_object_unserialize (void *buffer, size_t length)
 {
-	const void *data = buffer->data;
-	return unserialize(&data, buffer->length);
+	const void *data = buffer;
+	return unserialize(&data, length);
 }

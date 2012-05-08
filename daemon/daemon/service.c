@@ -11,6 +11,7 @@
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
+#include "../cloud-client.h"
 
 
 /** Called by the event loop whenever there is traffic on the service's socket.
@@ -32,12 +33,14 @@ socket_data (int fd, int mask, void *data)
 
 /** Called by the service's connection whenever a message is received. */
 static int
-message_received (int op, void *message, size_t length, void *data)
+message_received (struct cld_object *object, void *data)
 {
 	struct cld_service *service = data;
-	printf("service %p received message %d of %d bytes\n", service, op, (int)length);
+	printf("service %p sent ", service);
+	cld_object_print(object);
+	cld_object_destroy(object);
 	
-	switch (op) {
+	/*switch (op) {
 		case CLD_OP_SERVICE_RECORD: {
 			struct cld_service_record *record = message;
 			void *ptr = message + sizeof *record;
@@ -57,7 +60,7 @@ message_received (int op, void *message, size_t length, void *data)
 		default:
 			fprintf(stderr, "service %p sent unknown opcode %d\n", service, op);
 			return -1;
-	}
+	}*/
 	
 	return 1;
 }

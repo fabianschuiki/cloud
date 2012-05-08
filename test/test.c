@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	cld_object_destroy(object);
 	
 	if (buffer != NULL) {
-		object = cld_object_unserialize(buffer);
+		object = cld_object_unserialize(buffer->data, buffer->length);
 		if (object == NULL) {
 			fprintf(stderr, "unserializing object failed\n");
 		} else {

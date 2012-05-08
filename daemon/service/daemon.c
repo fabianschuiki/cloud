@@ -12,6 +12,7 @@
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
+#include "../cloud-client.h"
 
 
 struct cld_daemon {
@@ -36,10 +37,12 @@ socket_data (int fd, int mask, void *data)
 }
 
 static int
-message_received (int op, void *message, size_t length, void *data)
+message_received (struct cld_object *object, void *data)
 {
 	struct cld_service *daemon = data;
-	printf("daemon %p sent message %d of %d bytes\n", daemon, op, (int)length);
+	printf("daemon %p sent ", daemon);
+	cld_object_print(object);
+	cld_object_destroy(object);
 	return 1;
 }
 
@@ -97,14 +100,12 @@ cld_daemon_disconnect (struct cld_daemon *daemon)
 int
 cld_daemon_send_service_record (struct cld_daemon *daemon, const char *name)
 {
-	struct cld_service_record record;
-	record.name_len = strlen(name);
+	struct cld_object *record = cld_object_create("service");
+	if (record == NULL)
+		return -1;
 	
-	size_t len = sizeof record + record.name_len;
-	void *data = malloc(len);
-	void *ptr = data;
-	memcpy(ptr, &record, sizeof record); ptr += sizeof record;
-	memcpy(ptr, name, record.name_len); ptr += record.name_len;
+	cld_object_set_field(record, "name", cld_object_create_string(name));
 	
-	return cld_connection_write(daemon->connection, CLD_OP_SERVICE_RECORD, data, len);
+	cld_connection_write(daemon->connection, record);
+	cld_object_destroy(record);
 }

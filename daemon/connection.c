@@ -11,11 +11,12 @@
 #include "connection.h"
 #include "event-loop.h"
 #include "buffer.h"
+#include "object.h"
 
 
 struct cld_connection {
 	int fd;
-	cld_connection_message_func_t message;
+	cld_connection_received_func_t received;
 	void *data;
 	
 	struct cld_buffer *inbuf;
@@ -29,7 +30,7 @@ struct cld_message {
 
 
 struct cld_connection *
-cld_connection_create (int fd, cld_connection_message_func_t message, void *data)
+cld_connection_create (int fd, cld_connection_received_func_t received, void *data)
 {
 	struct cld_connection *connection;
 	
@@ -38,7 +39,7 @@ cld_connection_create (int fd, cld_connection_message_func_t message, void *data
 		return NULL;
 	
 	connection->fd = fd;
-	connection->message = message;
+	connection->received = received;
 	connection->data = data;
 	
 	connection->inbuf = cld_buffer_create();
@@ -77,15 +78,26 @@ cld_connection_data (struct cld_connection *connection, int mask)
 		
 		printf("read %d bytes, %d in the buffer\n", len, connection->inbuf->length);
 		
-		struct cld_message *msg = connection->inbuf->data;
-		while (connection->inbuf->length >= sizeof *msg) {
-			size_t length = msg->length + sizeof *msg;
+		//If enough data is available, slice off the received object.
+		while (connection->inbuf->length >= sizeof(int)) {
+			int length = *(int *)connection->inbuf->data;
+			if (connection->inbuf->length < length)
+				break;
+			
+			void *data = cld_buffer_slice(connection->inbuf, length);
+			struct cld_object *object = cld_object_unserialize(data, length);
+			free(data);
+			
+			if (object)
+				connection->received(object, connection->data);
+			
+			/*int length = msg->length + sizeof(int);
 			if (connection->inbuf->length < length)
 				break;
 			
 			void *data = cld_buffer_slice(connection->inbuf, length);
 			connection->message(msg->op, data + sizeof *msg, msg->length, connection->data);
-			free(data);
+			free(data);*/
 		}
 		
 		return len;
@@ -93,12 +105,9 @@ cld_connection_data (struct cld_connection *connection, int mask)
 }
 
 int
-cld_connection_write (struct cld_connection *connection,
-	int op,
-	const void *data,
-	size_t length)
+cld_connection_write (struct cld_connection *connection, struct cld_object *object)
 {
-	struct cld_message msg;
+	/*struct cld_message msg;
 	msg.op = op;
 	msg.length = length;
 	printf("writing op %d of length %lu\n", op, length);
@@ -112,6 +121,18 @@ cld_connection_write (struct cld_connection *connection,
 	if (write(connection->fd, data, length) < 0) {
 		error("write data");
 		return -1;
+	}*/
+	
+	struct cld_buffer *buffer = cld_object_serialize(object);
+	if (buffer == NULL)
+		return -1;
+	
+	if (write(connection->fd, buffer->data, buffer->length) < 0) {
+		error("write");
+		cld_buffer_destroy(buffer);
+		return -1;
 	}
+	
+	cld_buffer_destroy(buffer);
 	return 0;
 }
