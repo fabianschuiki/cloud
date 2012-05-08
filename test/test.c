@@ -1,6 +1,6 @@
-#include <cloud-client.h>
+#include <cloud.h>
 #include <object.h>
-#include <buffer.h>
+#include <../daemon/buffer.h>
 #include <stdlib.h>
 #include <stdio.h>
 

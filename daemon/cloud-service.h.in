@@ -1,0 +1,21 @@
+/*
+ * Copyright © 2012 Fabian Schuiki
+ */
+
+#ifndef CLOUD_SERVICE_H
+#define CLOUD_SERVICE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <cloud.h>
+
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif

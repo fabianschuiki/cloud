@@ -3,7 +3,7 @@
  */
 
 #include <cassert>
-#include <cloud-client.h>
+#include <cloud.h>
 
 #include "AccountsWindow.h"
 #include "AccountList.h"

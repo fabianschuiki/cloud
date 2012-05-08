@@ -6,7 +6,7 @@ file(GLOB_RECURSE sources RELATIVE ${PROJECT_SOURCE_DIR}/accounts source/*.cpp)
 add_executable(cloud-accounts ${sources})
 
 # cloud
-include_directories(${PROJECT_SOURCE_DIR}/daemon)
+include_directories(${PROJECT_BINARY_DIR})
 target_link_libraries(cloud-accounts cloud)
 
 # gtkmm3
