@@ -1,7 +1,7 @@
 #include <gtkmm.h>
 #include <iostream>
 
-#include "Accounts.h"
+#include "AccountsWindow.h"
 
 
 int main(int argc, char *argv[])
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	Accounts *window = NULL;
+	AccountsWindow *window = NULL;
 	builder->get_widget_derived("accounts", window);
 	if (!window) {
 		std::cerr << "unable to create accounts window" << std::endl;

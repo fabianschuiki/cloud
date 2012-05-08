@@ -80,7 +80,7 @@ client_data (int fd, int mask, void *data)
 		return -1;
 	}
 	
-	//cld_client_create(daemon, client_fd);
+	cld_client_create(daemon, client_fd);
 }
 
 static int

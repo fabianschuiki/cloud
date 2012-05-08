@@ -1,4 +1,4 @@
-add_executable(cloudd
+add_executable(cloud-daemon
 	cloud-daemon
 	socket
 	daemon/client
