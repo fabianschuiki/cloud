@@ -1,11 +1,19 @@
 #include <gtkmm.h>
+#include <glibmm/i18n.h>
 #include <iostream>
 
 #include "AccountsWindow.h"
+#include "AccountType.h"
 
 
 int main(int argc, char *argv[])
 {
+	//Setup the locale.
+	const char * gettext_package = "cloud-accounts";
+	bindtextdomain(gettext_package, "locale");
+	bind_textdomain_codeset(gettext_package, "UTF-8");
+	textdomain(gettext_package);
+	
 	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(
 		argc, argv, "ch.fabianschuiki.cloud.accounts");
 	
@@ -26,6 +34,9 @@ int main(int argc, char *argv[])
 		std::cerr << "Builder Error: " << ex.what() << std::endl;
 		return 1;
 	}
+	
+	//Initializes the account types.
+	AccountType::registerTypes();
 	
 	AccountsWindow *window = NULL;
 	builder->get_widget_derived("accounts", window);
