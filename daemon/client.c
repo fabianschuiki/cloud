@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-#include "cloud-client-private.h"
+#include "client.h"
 #include "socket.h"
 #include "event-loop.h"
 #include "client/daemon.h"

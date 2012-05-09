@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "cloud-service-private.h"
+#include "service.h"
 #include "socket.h"
 #include "event-loop.h"
 #include "service/daemon.h"

@@ -1,5 +1,5 @@
 #include <cloud.h>
-#include <object.h>
+#include <../daemon/object.h>
 #include <../daemon/buffer.h>
 #include <stdlib.h>
 #include <stdio.h>

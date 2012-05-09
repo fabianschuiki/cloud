@@ -3,7 +3,7 @@
  */
 
 #include <stdio.h>
-#include <service.h>
+#include <cloud-service.h>
 
 
 int main(int argc, char *argv[])

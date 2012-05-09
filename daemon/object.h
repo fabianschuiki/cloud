@@ -6,6 +6,7 @@
 #define OBJECT_H
 
 #include <stdlib.h>
+#include "object-public.h"
 
 
 struct cld_object;

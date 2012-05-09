@@ -5,7 +5,7 @@
 #ifndef CLOUD_CLIENT_PRIVATE_H
 #define CLOUD_CLIENT_PRIVATE_H
 
-#include "cloud-client.h"
+#include "client-public.h"
 
 
 struct cld_client {

@@ -7,11 +7,11 @@
 #include <string.h>
 
 #include "service.h"
-#include "../cloud-daemon.h"
+#include "../daemon.h"
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
-#include "../cloud-client.h"
+#include "../object.h"
 
 
 /** Called by the event loop whenever there is traffic on the service's socket.

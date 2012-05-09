@@ -2,10 +2,10 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
-#ifndef CLOUD_SERVICE_PRIVATE_H
-#define CLOUD_SERVICE_PRIVATE_H
+#ifndef SERVICE_H
+#define SERVICE_H
 
-#include "cloud-service.h"
+#include "service-public.h"
 
 
 struct cld_service {

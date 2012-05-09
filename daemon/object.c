@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "cloud-client.h"
+#include "client.h"
 #include "object.h"
 #include "buffer.h"
 

@@ -13,9 +13,8 @@
 #include <signal.h>
 
 #include "util.h"
-#include "cloud-daemon.h"
+#include "daemon.h"
 #include "event-loop.h"
-#include "private.h"
 #include "socket.h"
 #include "daemon/client.h"
 #include "daemon/service.h"

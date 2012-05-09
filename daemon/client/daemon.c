@@ -10,7 +10,7 @@
 #include "../connection.h"
 #include "../socket.h"
 #include "../event-loop.h"
-#include "../cloud-client-private.h"
+#include "../client.h"
 
 
 struct cld_daemon {

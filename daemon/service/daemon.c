@@ -7,12 +7,13 @@
 #include <string.h>
 
 #include "daemon.h"
-#include "../cloud-service-private.h"
+#include "../service.h"
 #include "../socket.h"
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
-#include "../cloud-client.h"
+#include "../client.h"
+#include "../object.h"
 
 
 struct cld_daemon {

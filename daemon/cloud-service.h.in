@@ -9,10 +9,11 @@
 extern "C" {
 #endif
 
-#include <cloud.h>
+#define CLOUD_VERSION_MAJOR @CLOUD_VERSION_MAJOR@
+#define CLOUD_VERSION_MINOR @CLOUD_VERSION_MINOR@
 
 
-
+@SERVICE_H@
 
 
 #ifdef __cplusplus

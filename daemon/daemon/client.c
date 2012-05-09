@@ -7,11 +7,12 @@
 #include <string.h>
 
 #include "client.h"
-#include "../cloud-daemon.h"
+#include "../daemon.h"
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../protocol.h"
-#include "../cloud-client.h"
+#include "../object.h"
+//#include "../client.h"
 
 
 /** Called by the event loop whenever there is traffic on the client's socket.
