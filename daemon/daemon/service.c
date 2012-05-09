@@ -10,7 +10,6 @@
 #include "../daemon.h"
 #include "../event-loop.h"
 #include "../connection.h"
-#include "../protocol.h"
 #include "../object.h"
 
 

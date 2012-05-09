@@ -10,9 +10,7 @@
 #include "../daemon.h"
 #include "../event-loop.h"
 #include "../connection.h"
-#include "../protocol.h"
 #include "../object.h"
-//#include "../client.h"
 
 
 /** Called by the event loop whenever there is traffic on the client's socket.

@@ -11,7 +11,6 @@
 #include "../socket.h"
 #include "../event-loop.h"
 #include "../connection.h"
-#include "../protocol.h"
 #include "../client.h"
 #include "../object.h"
 
