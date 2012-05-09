@@ -7,12 +7,21 @@
 
 int main(int argc, char *argv[])
 {
-	struct cld_object *object = cld_object_create("account");
+	struct cld_object *object = cld_object_create_array();
 	
+	struct cld_object *account1 = cld_object_create("account");
 	struct cld_object *user = cld_object_create("user");
-	cld_object_set_field(user, "username", cld_object_create_string("fabianschuiki"));
-	cld_object_set_field(user, "password", cld_object_create_string("HeLo.Aweorld"));
-	cld_object_set_field(object, "dschingsta", user);
+	cld_object_set(user, "username", cld_object_create_string("fabianschuiki"));
+	cld_object_set(user, "password", cld_object_create_string("HeLo.Aweorld"));
+	cld_object_set(account1, "dschingsta", user);
+	
+	struct cld_object *account2 = cld_object_create("account");
+	struct cld_object *client = cld_object_create("client");
+	cld_object_set(client, "name", cld_object_create_string("Fabian"));
+	cld_object_set(account2, "data", client);
+	
+	cld_object_array_add(object, account1);
+	cld_object_array_add(object, account2);
 	
 	cld_object_print(object);
 	

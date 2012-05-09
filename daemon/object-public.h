@@ -14,10 +14,19 @@ struct cld_object;
 
 struct cld_object *cld_object_create(const char *type);
 struct cld_object *cld_object_create_string(const char *string);
+struct cld_object *cld_object_create_array();
 void cld_object_destroy(struct cld_object *object);
 
-void cld_object_set_field(struct cld_object *object, const char *name, struct cld_object *value);
-struct cld_object *cld_object_get_field(struct cld_object *object, const char *name);
+void cld_object_set(struct cld_object *object, const char *name, struct cld_object *value);
+struct cld_object *cld_object_get(struct cld_object *object, const char *name);
+
+void cld_object_array_add(struct cld_object *object, struct cld_object *value);
+void cld_object_array_remove(struct cld_object *object, unsigned int index);
+void cld_object_array_remove_object(struct cld_object *object, struct cld_object *value);
+void cld_object_array_set(struct cld_object *object, unsigned int index, struct cld_object *value);
+struct cld_object *cld_object_array_get(struct cld_object *object, unsigned int index);
+unsigned int cld_object_array_count(struct cld_object *object);
+int cld_object_array_find(struct cld_object *object, struct cld_object *value);
 
 void cld_object_print(struct cld_object *object);
 

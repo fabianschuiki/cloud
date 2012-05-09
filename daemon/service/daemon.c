@@ -104,7 +104,7 @@ cld_daemon_send_service_record (struct cld_daemon *daemon, const char *name)
 	if (record == NULL)
 		return -1;
 	
-	cld_object_set_field(record, "name", cld_object_create_string(name));
+	cld_object_set(record, "name", cld_object_create_string(name));
 	
 	cld_connection_write(daemon->connection, record);
 	cld_object_destroy(record);

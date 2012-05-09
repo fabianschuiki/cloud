@@ -12,8 +12,6 @@
 #include "buffer.h"
 
 
-static const char * const CLD_OBJECT_STRING_TYPE = "@s";
-
 struct cld_field {
 	struct cld_field *next;
 	struct cld_field *prev;
@@ -32,10 +30,12 @@ cld_field_create (const char *name)
 	
 	memset(field, 0, sizeof *field);
 	
-	field->name = malloc(strlen(name) + 1);
-	if (field->name == NULL)
-		return NULL;
-	strcpy(field->name, name);
+	if (name != NULL) {
+		field->name = malloc(strlen(name) + 1);
+		if (field->name == NULL)
+			return NULL;
+		strcpy(field->name, name);
+	}
 	
 	return field;
 }
@@ -58,11 +58,19 @@ cld_field_set_object (struct cld_field *field, struct cld_object *object)
 }
 
 
+
+static const char * const CLD_OBJECT_STRING_TYPE = "@s";
+static const char * const CLD_OBJECT_ARRAY_TYPE = "@a";
+
 struct cld_object {
 	char *type;
-	void *value;
-	struct cld_field *field_head;
-	struct cld_field *field_tail;
+	union {
+		char *str;
+		struct {
+			struct cld_field *field_head;
+			struct cld_field *field_tail;
+		};
+	};
 };
 
 
@@ -94,26 +102,36 @@ cld_object_create_string (const char *string)
 	if (object == NULL)
 		return NULL;
 	
-	object->value = malloc(strlen(string) + 1);
-	strcpy(object->value, string);
+	object->str = malloc(strlen(string) + 1);
+	strcpy(object->str, string);
 	
 	return object;
+}
+
+struct cld_object *
+cld_object_create_array ()
+{
+	return cld_object_create(CLD_OBJECT_ARRAY_TYPE);
 }
 
 void
 cld_object_destroy (struct cld_object *object)
 {
-	struct cld_field *field = object->field_head;
-	while (field) {
-		struct cld_field *tmp = field;
-		field = field->next;
-		cld_field_destroy(tmp);
+	if (cld_object_is_string(object)) {
+		free(object->str);
+	}
+	
+	else {
+		struct cld_field *field = object->field_head;
+		while (field) {
+			struct cld_field *tmp = field;
+			field = field->next;
+			cld_field_destroy(tmp);
+		}
 	}
 	
 	if (object->type)
 		free(object->type);
-	if (object->value)
-		free(object->value);
 	free(object);
 }
 
@@ -133,13 +151,22 @@ add_field (struct cld_object *object, struct cld_field *field)
 		object->field_head = field;
 }
 
+static void
+remove_field (struct cld_object *object, struct cld_field *field)
+{
+	if (field->next) field->next->prev = field->prev;
+	if (field->prev) field->prev->next = field->next;
+	if (object->field_head == field) object->field_head = field->next;
+	if (object->field_tail == field) object->field_tail = field->prev;
+}
+
 
 /** Sets the value of the object's field with the given name. Overwrites what-
  * ever is in the field at the moment. By adding an object the caller hands off
  * responsibility to free the object; field values are automatically freed
  * whenever they're overwritten or the parent object gets destroyed. */
 void
-cld_object_set_field (struct cld_object *object, const char *name, struct cld_object *value)
+cld_object_set (struct cld_object *object, const char *name, struct cld_object *value)
 {
 	struct cld_field *field = object->field_head;
 	while (field && strcmp(field->name, name) != 0)
@@ -159,7 +186,7 @@ cld_object_set_field (struct cld_object *object, const char *name, struct cld_ob
  * if the field does not exist. Note that if the field is set to NULL the
  * function will also return NULL. */
 struct cld_object *
-cld_object_get_field (struct cld_object *object, const char *name)
+cld_object_get (struct cld_object *object, const char *name)
 {
 	struct cld_field *field = object->field_head;
 	while (field) {
@@ -170,36 +197,143 @@ cld_object_get_field (struct cld_object *object, const char *name)
 	return NULL;
 }
 
+static struct cld_field *
+get_array_field (struct cld_object *object, unsigned int index)
+{
+	struct cld_field *field = object->field_head;
+	int i = 0;
+	while (field && i++ < index) {
+		field = field->next;
+	}
+	if (field == NULL) {
+		fprintf(stderr, "%s: index %i out of bounds\n", __FUNCTION__, index);
+		return NULL;
+	}
+	return field;
+}
+
+void
+cld_object_array_add (struct cld_object *object, struct cld_object *value)
+{
+	struct cld_field *field = cld_field_create(NULL);
+	if (field == NULL)
+		return;
+	add_field(object, field);
+	cld_field_set_object(field, value);
+}
+
+/** Removes the given index from the array. */
+void
+cld_object_array_remove (struct cld_object *object, unsigned int index)
+{
+	struct cld_field *field = get_array_field(object, index);
+	if (field == NULL)
+		return;
+	remove_field(object, field);
+	cld_field_destroy(field);
+}
+
+/** Removes the given object from the array. */
+void
+cld_object_array_remove_object (struct cld_object *object, struct cld_object *value)
+{
+	int index = cld_object_array_find(object, value);
+	if (index < 0)
+		return;
+	cld_object_array_remove(object, index);
+}
+
+void
+cld_object_array_set (struct cld_object *object, unsigned int index, struct cld_object *value)
+{
+	struct cld_field *field = get_array_field(object, index);
+	if (field == NULL)
+		return;
+	cld_field_set_object(field, value);
+}
+
+struct cld_object *
+cld_object_array_get (struct cld_object *object, unsigned int index)
+{
+	struct cld_field *field = get_array_field(object, index);
+	if (field == NULL)
+		return NULL;
+	return field->object;
+}
+
+unsigned int
+cld_object_array_count (struct cld_object *object)
+{
+	unsigned int c = 0;
+	struct cld_field *field = object->field_head;
+	while (field) {
+		c++;
+		field = field->next;
+	}
+	return c;
+}
+
+/** Returns the index of the value in the given array, or -1 if it is not part
+ * of the array. */
+int
+cld_object_array_find (struct cld_object *object, struct cld_object *value)
+{
+	struct cld_field *field = object->field_head;
+	int i = 0;
+	while (field && field->object != value) {
+		i++;
+		field = field->next;
+	}
+	if (field == NULL)
+		return -1;
+	return i;
+}
+
 
 static void
 print (struct cld_object *object, int indent)
 {
-	if (object == NULL) {
-		printf("NULL");
-		return;
-	}
-	
-	if (strcmp(object->type, CLD_OBJECT_STRING_TYPE) == 0) {
-		printf("\"%s\"", (char *)object->value);
-		return;
-	}
-	
 	char in[128];
 	int i;
 	for (i = 0; i < indent * 4 && i < 127; i++)
 		in[i] = ' ';
 	in[i] = 0;
 	
-	printf("%s {", object->type);
-	
-	struct cld_field *field = object->field_head;
-	while (field) {
-		printf("\n %s   %s = ", in, field->name);
-		print(field->object, indent + 1);
-		field = field->next;
+	//Null objects
+	if (object == NULL) {
+		printf("NULL");
 	}
 	
-	printf("\n%s}", in);
+	//Strings
+	else if (cld_object_is_string(object)) {
+		printf("\"%s\"", object->str);
+		return;
+	}
+	
+	//Arrays
+	else if (cld_object_is_array(object)) {
+		printf("[");
+		struct cld_field *field = object->field_head;
+		int i = 0;
+		while (field) {
+			printf("\n%s    %i = ", in, i++);
+			print(field->object, indent + 1);
+			field = field->next;
+		}
+		printf("\n%s]", in);
+	}
+	
+	//Objects
+	else {
+		printf("%s {", object->type);
+		struct cld_field *field = object->field_head;
+		while (field) {
+			printf("\n%s    %s = ", in, field->name);
+			print(field->object, indent + 1);
+			field = field->next;
+		}
+		printf("\n%s}", in);
+	}
 }
 
 /** Dumps the object to standard output. Nice for debugging. */
@@ -208,6 +342,22 @@ cld_object_print (struct cld_object *object)
 {
 	print(object, 0);
 	printf("\n");
+}
+
+int
+cld_object_is (struct cld_object *object, const char *type)
+{
+	return strcmp(object->type, type) == 0;
+}
+
+int cld_object_is_string (struct cld_object *object)
+{
+	return cld_object_is(object, CLD_OBJECT_STRING_TYPE);
+}
+
+int cld_object_is_array (struct cld_object *object)
+{
+	return cld_object_is(object, CLD_OBJECT_ARRAY_TYPE);
 }
 
 
@@ -223,8 +373,17 @@ serialize (struct cld_object *object, struct cld_buffer *buffer)
 		cld_buffer_put(buffer, object->type, strlen(object->type) + 1);
 		
 		//Strings
-		if (strcmp(object->type, CLD_OBJECT_STRING_TYPE) == 0) {
-			cld_buffer_put(buffer, object->value, strlen(object->value) + 1);
+		if (cld_object_is_string(object)) {
+			cld_buffer_put(buffer, object->str, strlen(object->str) + 1);
+		}
+		
+		//Arrays
+		else if (cld_object_is_array(object)) {
+			struct cld_field *field = object->field_head;
+			while (field) {
+				serialize(field->object, buffer);
+				field = field->next;
+			}
 		}
 		
 		//Objects
@@ -290,6 +449,7 @@ unserialize (const void **data, size_t length)
 	}
 	(*data)++;
 	
+	//Unserialize Strings
 	if (strcmp(type, CLD_OBJECT_STRING_TYPE) == 0) {
 		const char *value = *data;
 		for (; *(char *)*data != 0; (*data)++) {
@@ -302,6 +462,29 @@ unserialize (const void **data, size_t length)
 		
 		return cld_object_create_string(value);
 	}
+	
+	//Unserialize Arrays
+	else if (strcmp(type, CLD_OBJECT_ARRAY_TYPE) == 0) {
+		struct cld_object *object = cld_object_create_array();
+		if (object == NULL)
+			return NULL;
+		
+		int i = 0;
+		while (*data - base < obj_length) {
+			struct cld_object *value = unserialize(data, length - (*data - base));
+			if (value == NULL) {
+				fprintf(stderr, "%s: unable to unserialize array element %i\n", __FUNCTION__, i);
+				cld_object_destroy(object);
+				return NULL;
+			}
+			i++;
+			cld_object_array_add(object, value);
+		}
+		
+		return object;
+	}
+	
+	//Unserialize Objects
 	else {
 		struct cld_object *object = cld_object_create(type);
 		if (object == NULL)
@@ -325,7 +508,7 @@ unserialize (const void **data, size_t length)
 				return NULL;
 			}
 			
-			cld_object_set_field(object, name, value);
+			cld_object_set(object, name, value);
 		}
 		
 		return object;
