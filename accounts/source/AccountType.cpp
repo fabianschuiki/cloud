@@ -2,6 +2,7 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
+#include <cassert>
 #include <iostream>
 #include <vector>
 #include <glibmm/i18n.h>
@@ -12,9 +13,28 @@
 
 static std::vector<AccountType *> types;
 
+
 void AccountType::registerTypes()
 {
-	types.push_back(new AccountTypeTwitter);
+	assert(types.empty() && "registerTypes() called more than once");
 	
-	std::cout << "twitter type is called " << gettext("account-twitter") << std::endl;
+	types.push_back(new AccountTypeTwitter);
+}
+
+AccountType * AccountType::getType(std::string identifier)
+{
+	for (int i = 0; i < types.size(); i++)
+		if (types[i]->getIdentifier() == identifier)
+			return types[i];
+	return NULL;
+}
+
+AccountType * AccountType::getType(int index)
+{
+	return types[index];
+}
+
+int AccountType::numTypes()
+{
+	return types.size();
 }
