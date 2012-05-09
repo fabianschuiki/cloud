@@ -7,6 +7,7 @@
 
 #include "AccountsWindow.h"
 #include "AccountList.h"
+#include "AddAccountPanel.h"
 
 
 AccountsWindow::AccountsWindow(
@@ -30,6 +31,9 @@ AccountsWindow::AccountsWindow(
 		accountList = new AccountList;
 		add(*accountList);
 		set_border_width(20);
+		
+		addAccountPanel = new AddAccountPanel(this);
+		addAccountPanel->show();
 	}
 	
 	show_all_children();

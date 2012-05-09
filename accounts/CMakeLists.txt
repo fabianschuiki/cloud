@@ -1,5 +1,11 @@
 find_package(PkgConfig REQUIRED)
 
+set (DATA_DIR ${PROJECT_SOURCE_DIR}/accounts/data)
+set (LOCALE_DIR ${PROJECT_BINARY_DIR}/accounts/locale)
+
+configure_file(config.h.in ${PROJECT_BINARY_DIR}/accounts/config.h)
+include_directories(${PROJECT_BINARY_DIR}/accounts)
+
 # gather source files
 file(GLOB_RECURSE sources RELATIVE ${PROJECT_SOURCE_DIR}/accounts source/*.cpp)
 

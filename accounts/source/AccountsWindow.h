@@ -10,6 +10,7 @@
 
 struct cld_client;
 class AccountList;
+class AddAccountPanel;
 
 
 class AccountsWindow : public Gtk::Window
@@ -22,4 +23,5 @@ protected:
 	struct cld_client *cloud;
 	
 	AccountList *accountList;
+	AddAccountPanel *addAccountPanel;
 };
