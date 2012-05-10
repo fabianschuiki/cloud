@@ -4,12 +4,15 @@
 
 #pragma once
 
+#include <map>
+#include <string>
 #include <gtkmm/window.h>
 #include <gtkmm/builder.h>
 
 
 struct cld_client;
-class AccountList;
+class Account;
+class AccountListWidget;
 class AccountType;
 class AddAccountPanel;
 
@@ -25,6 +28,8 @@ public:
 protected:
 	struct cld_client *cloud;
 	
-	AccountList *accountList;
+	std::map<std::string, Account*> accounts;
+	
+	AccountListWidget *accountList;
 	AddAccountPanel *addAccountPanel;
 };

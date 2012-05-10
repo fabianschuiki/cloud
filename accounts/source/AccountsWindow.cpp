@@ -7,8 +7,10 @@
 #include <iostream>
 
 #include "AccountsWindow.h"
-#include "AccountList.h"
+#include "AccountListWidget.h"
 #include "AddAccountPanel.h"
+#include "Account.h"
+#include "AccountType.h"
 
 
 AccountsWindow::AccountsWindow(
@@ -29,7 +31,7 @@ AccountsWindow::AccountsWindow(
 	
 	//Otherwise provide normal functionality.
 	else {
-		accountList = new AccountList;
+		accountList = new AccountListWidget;
 		add(*accountList);
 		set_border_width(20);
 		
@@ -52,4 +54,12 @@ AccountsWindow::~AccountsWindow()
  * input further information */
 void AccountsWindow::addAccount(AccountType *type)
 {
+	Account *account = new Account(type);
+	accounts[account->getUUID()] = account;
+	
+	std::cout << "created " << account->getType()->getName() << " with UUID " << account->getUUID() << std::endl;
+	struct cld_object *obj = account->encode();
+	cld_object_print(obj);
+	cld_client_account_set(cloud, obj);
+	cld_object_destroy(obj);
 }

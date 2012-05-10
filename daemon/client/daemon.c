@@ -13,13 +13,6 @@
 #include "../client.h"
 
 
-struct cld_daemon {
-	struct cld_client *client;
-	struct cld_socket *socket;
-	struct cld_event_source *source;
-	struct cld_connection *connection;
-};
-
 static int
 socket_data (int fd, int mask, void *data)
 {

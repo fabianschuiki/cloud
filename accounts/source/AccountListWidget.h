@@ -6,11 +6,11 @@
 #include <gtkmm/widget.h>
 
 
-class AccountList : public Gtk::Widget
+class AccountListWidget : public Gtk::Widget
 {
 public:
-	AccountList();
-	virtual ~AccountList();
+	AccountListWidget();
+	virtual ~AccountListWidget();
 	
 protected:
 	virtual void on_realize();

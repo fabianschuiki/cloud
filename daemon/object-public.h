@@ -2,14 +2,6 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
-#ifndef CLOUD_OBJECT_H
-#define CLOUD_OBJECT_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 struct cld_object;
 
 struct cld_object *cld_object_create(const char *type);
@@ -29,10 +21,3 @@ unsigned int cld_object_array_count(struct cld_object *object);
 int cld_object_array_find(struct cld_object *object, struct cld_object *value);
 
 void cld_object_print(struct cld_object *object);
-
-
-#ifdef _cplusplus
-}
-#endif
-
-#endif

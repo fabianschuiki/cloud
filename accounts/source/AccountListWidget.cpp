@@ -5,21 +5,21 @@
 #include <gdkmm/general.h>
 #include <iostream>
 
-#include "AccountList.h"
+#include "AccountListWidget.h"
 
 
-AccountList::AccountList():
-	Glib::ObjectBase("AccountList"),
+AccountListWidget::AccountListWidget():
+	Glib::ObjectBase("AccountListWidget"),
 	Gtk::Widget()
 {
 	set_has_window(true);
 }
 
-AccountList::~AccountList()
+AccountListWidget::~AccountListWidget()
 {
 }
 
-void AccountList::on_realize()
+void AccountListWidget::on_realize()
 {
 	set_realized();
 	
@@ -43,13 +43,13 @@ void AccountList::on_realize()
 	}
 }
 
-void AccountList::on_unrealize()
+void AccountListWidget::on_unrealize()
 {
 	gdkWindow.reset();
 	Gtk::Widget::on_unrealize();
 }
 
-void AccountList::on_size_allocate(Gtk::Allocation &allocation)
+void AccountListWidget::on_size_allocate(Gtk::Allocation &allocation)
 {
 	set_allocation(allocation);
 	
@@ -62,6 +62,6 @@ void AccountList::on_size_allocate(Gtk::Allocation &allocation)
 	}
 }
 
-bool AccountList::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
+bool AccountListWidget::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
 {
 }

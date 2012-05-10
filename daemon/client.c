@@ -8,6 +8,7 @@
 #include "socket.h"
 #include "event-loop.h"
 #include "client/daemon.h"
+#include "connection.h"
 
 
 struct cld_client *
@@ -41,4 +42,10 @@ cld_client_destroy (struct cld_client *client)
 	cld_daemon_connect(client->daemon);
 	cld_event_loop_destroy(client->loop);
 	free(client);
+}
+
+void
+cld_client_account_set (struct cld_client *client, struct cld_object *account)
+{
+	cld_connection_write(client->daemon->connection, account);
 }
