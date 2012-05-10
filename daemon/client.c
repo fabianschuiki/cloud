@@ -47,6 +47,16 @@ cld_client_destroy (struct cld_client *client)
 	free(client);
 }
 
+static int
+catch_error (const char *func, struct cld_object *response)
+{
+	if (cld_object_is(response, "error")) {
+		fprintf(stderr, "%s: daemon returned error: %s\n", func, cld_object_string(cld_object_get(response, "message")));
+		return -1;
+	}
+	return 0;
+}
+
 void
 cld_client_account_set (struct cld_client *client, struct cld_object *account)
 {
@@ -65,5 +75,11 @@ cld_client_account_list (struct cld_client *client)
 	if (cld_connection_write(client->daemon->connection, req) < 0)
 		return NULL;
 	
-	return NULL;
+	struct cld_object *response = cld_connection_read(client->daemon->connection);
+	if (response == NULL)
+		return NULL;
+	if (catch_error(__FUNCTION__, response) < 0)
+		return NULL;
+	
+	return response;
 }

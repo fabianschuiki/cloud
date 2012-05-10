@@ -9,8 +9,15 @@ struct cld_object *cld_object_create_string(const char *string);
 struct cld_object *cld_object_create_array();
 void cld_object_destroy(struct cld_object *object);
 
+int cld_object_is (struct cld_object *object, const char *type);
+int cld_object_is_string (struct cld_object *object);
+int cld_object_is_array (struct cld_object *object);
+
 void cld_object_set(struct cld_object *object, const char *name, struct cld_object *value);
 struct cld_object *cld_object_get(struct cld_object *object, const char *name);
+const char *cld_object_get_string(struct cld_object *object, const char *name);
+
+const char *cld_object_string (struct cld_object *object);
 
 void cld_object_array_add(struct cld_object *object, struct cld_object *value);
 void cld_object_array_remove(struct cld_object *object, unsigned int index);

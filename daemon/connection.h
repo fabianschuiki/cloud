@@ -18,6 +18,7 @@ void cld_connection_destroy (struct cld_connection *connection);
 
 int cld_connection_data (struct cld_connection *connection, int mask);
 int cld_connection_write (struct cld_connection *connection, struct cld_object *object);
+struct cld_object *cld_connection_read (struct cld_connection *connection);
 
 
 #endif

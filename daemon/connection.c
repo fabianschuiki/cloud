@@ -60,6 +60,34 @@ cld_connection_destroy (struct cld_connection *connection)
 	free(connection);
 }
 
+struct cld_object *
+read_object (struct cld_connection *connection, int block)
+{
+	char buffer[4096];
+	int len = read(connection->fd, buffer, 4096);
+	if (len <= 0) {
+		close(connection->fd);
+		connection->fd = 0;
+		return NULL;
+	}
+	cld_buffer_put(connection->inbuf, buffer, len);
+	
+	if (connection->inbuf->length >= sizeof(int)) {
+		int length = *(int *)connection->inbuf->data;
+		if (connection->inbuf->length < length)
+			return NULL;
+		
+		void *data = cld_buffer_slice(connection->inbuf, length);
+		struct cld_object *object = cld_object_unserialize(data, length);
+		free(data);
+		
+		if (object)
+			return object;
+	}
+	
+	return NULL;
+}
+
 int
 cld_connection_data (struct cld_connection *connection, int mask)
 {
@@ -70,59 +98,16 @@ cld_connection_data (struct cld_connection *connection, int mask)
 	}
 	
 	if (mask & CLD_EVENT_READABLE) {
-		char buffer[4096];
-		int len = read(connection->fd, buffer, 4096);
-		if (len <= 0)
-			return -1;
-		cld_buffer_put(connection->inbuf, buffer, len);
-		
-		printf("read %d bytes, %d in the buffer\n", len, connection->inbuf->length);
-		
-		//If enough data is available, slice off the received object.
-		while (connection->inbuf->length >= sizeof(int)) {
-			int length = *(int *)connection->inbuf->data;
-			if (connection->inbuf->length < length)
-				break;
-			
-			void *data = cld_buffer_slice(connection->inbuf, length);
-			struct cld_object *object = cld_object_unserialize(data, length);
-			free(data);
-			
-			if (object)
-				connection->received(object, connection->data);
-			
-			/*int length = msg->length + sizeof(int);
-			if (connection->inbuf->length < length)
-				break;
-			
-			void *data = cld_buffer_slice(connection->inbuf, length);
-			connection->message(msg->op, data + sizeof *msg, msg->length, connection->data);
-			free(data);*/
-		}
-		
-		return len;
+		struct cld_object *object;
+		while (object = read_object(connection, 0))
+			connection->received(object, connection->data);
+		return connection->fd > 0 ? 0 : -1;
 	}
 }
 
 int
 cld_connection_write (struct cld_connection *connection, struct cld_object *object)
 {
-	/*struct cld_message msg;
-	msg.op = op;
-	msg.length = length;
-	printf("writing op %d of length %lu\n", op, length);
-	if (write(connection->fd, &msg, sizeof msg) < 0) {
-		error("write header");
-		return -1;
-	}
-	if (length == 0)
-		return 0;
-	
-	if (write(connection->fd, data, length) < 0) {
-		error("write data");
-		return -1;
-	}*/
-	
 	struct cld_buffer *buffer = cld_object_serialize(object);
 	if (buffer == NULL)
 		return -1;
@@ -135,4 +120,11 @@ cld_connection_write (struct cld_connection *connection, struct cld_object *obje
 	
 	cld_buffer_destroy(buffer);
 	return 0;
+}
+
+struct cld_object *
+cld_connection_read (struct cld_connection *connection)
+{
+	struct cld_object *object = read_object(connection, 1);
+	return object;
 }

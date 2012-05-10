@@ -72,16 +72,17 @@ cld_socket_destroy (struct cld_socket* socket)
 int
 cld_socket_listen (struct cld_socket *socket)
 {
-	printf("listening on %s\n", socket->addr.sun_path);
 	socket->listen = 1;
 	
 	if (bind(socket->fd, (struct sockaddr *) &socket->addr, socket->addr_size) < 0) {
+		fprintf(stderr, "%s: socket %s\n", __FUNCTION__, socket->addr.sun_path);
 		error("bind");
 		close(socket->fd);
 		return -1;
 	}
 	
 	if (listen(socket->fd, 1) < 0) {
+		fprintf(stderr, "%s: socket %s\n", __FUNCTION__, socket->addr.sun_path);
 		error("listen");
 		close(socket->fd);
 		unlink(socket->addr.sun_path);
@@ -94,9 +95,8 @@ cld_socket_listen (struct cld_socket *socket)
 int
 cld_socket_connect (struct cld_socket *socket)
 {
-	printf("connecting to %s\n", socket->addr.sun_path);
-	
 	if (connect(socket->fd, (struct sockaddr *) &socket->addr, socket->addr_size) < 0) {
+		fprintf(stderr, "%s: socket %s\n", __FUNCTION__, socket->addr.sun_path);
 		error("connect");
 		close(socket->fd);
 		return -1;

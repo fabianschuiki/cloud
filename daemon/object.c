@@ -144,8 +144,7 @@ add_field (struct cld_object *object, struct cld_field *field)
 	field->prev = object->field_tail;
 	if (object->field_tail)
 		object->field_tail->next = field;
-	else
-		object->field_tail = field;
+	object->field_tail = field;
 	
 	if (object->field_head == NULL)
 		object->field_head = field;
@@ -195,6 +194,24 @@ cld_object_get (struct cld_object *object, const char *name)
 		field = field->next;
 	}
 	return NULL;
+}
+
+/** Convenience function that returns the object's field with the given name
+ * as a string. */
+const char *
+cld_object_get_string (struct cld_object *object, const char *name)
+{
+	struct cld_object *string = cld_object_get(object, name);
+	if (string == NULL || !cld_object_is_string(string))
+		return NULL;
+	return cld_object_string(string);
+}
+
+/** Returns the object's string value. */
+const char *
+cld_object_string (struct cld_object *object)
+{
+	return object->str;
 }
 
 static struct cld_field *

@@ -35,7 +35,6 @@ cld_buffer_destroy (struct cld_buffer *buffer)
 void
 cld_buffer_resize (struct cld_buffer *buffer, size_t size)
 {
-	printf("resizing buffer %p to %d\n", buffer, (int)size);
 	void *data = malloc(size);
 	memcpy(data, buffer->data, buffer->size);
 	free(buffer->data);
@@ -63,7 +62,6 @@ cld_buffer_put (struct cld_buffer *buffer, const void *data, size_t length)
 void *
 cld_buffer_slice (struct cld_buffer *buffer, size_t offset)
 {
-	printf("slicing buffer %p at %lu\n", buffer, offset);
 	void *data = buffer->data;
 	buffer->data = malloc(buffer->size);
 	buffer->length -= offset;

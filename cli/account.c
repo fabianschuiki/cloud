@@ -38,6 +38,14 @@ cloud_cmd_account_list (int argc, char *argv[])
 	if (accounts == NULL)
 		return -1;
 	
+	int num = cld_object_array_count(accounts);
+	int i;
+	for (i = 0; i < num; i++) {
+		struct cld_object *account = cld_object_array_get(accounts, i);
+		printf("%s  %s  %s\n", cld_object_get_string(account, "uuid"), cld_object_get_string(account, "type"), cld_object_get_string(account, "username"));
+	}
+	
+	cld_object_destroy(accounts);
 	return 0;
 }
 
