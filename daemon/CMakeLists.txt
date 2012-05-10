@@ -21,7 +21,7 @@ configure_file (cloud.h.in ${PROJECT_BINARY_DIR}/cloud.h)
 configure_file (cloud-service.h.in ${PROJECT_BINARY_DIR}/cloud-service.h)
 
 
-add_executable(cloud-daemon
+add_executable(cloudd
 	daemon.c
 	socket.c
 	daemon/client.c
