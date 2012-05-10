@@ -4,14 +4,18 @@
 
 #include <gdkmm/general.h>
 #include <iostream>
+#include <gtkmm/settings.h>
 
 #include "AccountListWidget.h"
+#include "AccountsWindow.h"
 
 
-AccountListWidget::AccountListWidget():
+AccountListWidget::AccountListWidget(AccountsWindow *window):
 	Glib::ObjectBase("AccountListWidget"),
 	Gtk::Widget()
 {
+	this->window = window;
+	
 	set_has_window(true);
 }
 
@@ -64,4 +68,12 @@ void AccountListWidget::on_size_allocate(Gtk::Allocation &allocation)
 
 bool AccountListWidget::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
 {
+	cr->save();
+	cr->translate(10, 50);
+	cr->show_text("Hello World");
+	cr->restore();
+	
+	Glib::RefPtr<Gtk::Settings> settings = Gtk::Settings::get_default();
+	Glib::ustring name = settings->property_gtk_font_name().get_value();
+	std::cout << "gtk font name is " << name << std::endl;
 }

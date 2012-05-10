@@ -31,7 +31,7 @@ AccountsWindow::AccountsWindow(
 	
 	//Otherwise provide normal functionality.
 	else {
-		accountList = new AccountListWidget;
+		accountList = new AccountListWidget(this);
 		add(*accountList);
 		set_border_width(20);
 		

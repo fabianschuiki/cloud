@@ -5,14 +5,18 @@
 #pragma once
 #include <gtkmm/widget.h>
 
+class AccountsWindow;
+
 
 class AccountListWidget : public Gtk::Widget
 {
 public:
-	AccountListWidget();
+	AccountListWidget(AccountsWindow *window);
 	virtual ~AccountListWidget();
 	
 protected:
+	AccountsWindow *window;
+	
 	virtual void on_realize();
 	virtual void on_unrealize();
 	virtual void on_size_allocate(Gtk::Allocation &allocation);
