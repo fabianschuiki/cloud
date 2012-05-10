@@ -22,6 +22,7 @@ public:
 	virtual std::string getIdentifier() const = 0;
 	
 	Glib::ustring getName() const;
+	Glib::ustring getIconPath() const;
 	Gtk::Image* getIcon();
 	
 protected:

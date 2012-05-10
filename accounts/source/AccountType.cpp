@@ -9,7 +9,9 @@
 
 #include <config.h>
 #include "AccountType.h"
+
 #include "AccountTypeTwitter.h"
+#include "AccountTypeWordPress.h"
 
 
 static std::vector<AccountType *> types;
@@ -20,6 +22,7 @@ void AccountType::registerTypes()
 	assert(types.empty() && "registerTypes() called more than once");
 	
 	types.push_back(new AccountTypeTwitter);
+	types.push_back(new AccountTypeWordPress);
 }
 
 AccountType * AccountType::getType(std::string identifier)
@@ -61,13 +64,19 @@ Glib::ustring AccountType::getName() const
 	return gettext(name.str().c_str());
 }
 
+Glib::ustring AccountType::getIconPath() const
+{
+	Glib::ustring path(DATA_DIR);
+	path += "/";
+	path += getIdentifier();
+	path += ".png";
+	return path;
+}
+
 Gtk::Image* AccountType::getIcon()
 {
 	if (!icon) {
-		Glib::ustring path(DATA_DIR);
-		path += "/";
-		path += getIdentifier();
-		path += ".png";
+		Glib::ustring path = getIconPath();
 		std::cout << "loading icon for " << getIdentifier() << " from " << path << std::endl;
 		icon = new Gtk::Image(path);
 	}

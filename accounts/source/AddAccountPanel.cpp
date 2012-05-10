@@ -15,25 +15,30 @@ AddAccountPanel::AddAccountPanel(AccountsWindow *window)
 {
 	this->window = window;
 	
-	resize(400, 400);
+	set_border_width(20);
+	resize(250, 100);
 	set_title("Add Account");
-	
-	box.set_orientation(Gtk::ORIENTATION_VERTICAL);
 	
 	for (int i = 0; i < AccountType::numTypes(); i++) {
 		AccountType *type = AccountType::getType(i);
-		std::cout << "adding type " << type->getIdentifier() << std::endl;
-		
-		Gtk::Button *button = new Gtk::Button(type->getName(), true);
-		button->set_image(*type->getIcon());
+		Gtk::Button *button = new Gtk::Button;
+		button->set_label(type->getName());
+		button->signal_clicked().connect(sigc::bind<AccountType*>(sigc::mem_fun(*this, &AddAccountPanel::on_add_clicked), type));
+		buttons.insert(Glib::RefPtr<Gtk::Button>(button));
 		box.add(*button);
 	}
 	
+	box.set_orientation(Gtk::ORIENTATION_VERTICAL);
 	add(box);
-	
 	show_all_children();
 }
 
 AddAccountPanel::~AddAccountPanel()
 {
+}
+
+void AddAccountPanel::on_add_clicked(AccountType *type)
+{
+	std::cout << "adding " << type->getName() << " account" << std::endl;
+	window->addAccount(type);
 }

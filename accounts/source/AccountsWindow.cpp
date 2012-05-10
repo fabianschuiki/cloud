@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cloud.h>
+#include <iostream>
 
 #include "AccountsWindow.h"
 #include "AccountList.h"
@@ -45,4 +46,10 @@ AccountsWindow::~AccountsWindow()
 		cld_client_destroy(cloud);
 		cloud = NULL;
 	}
+}
+
+/** Creates a new account of the given type and alters the UI so the user may
+ * input further information */
+void AccountsWindow::addAccount(AccountType *type)
+{
 }
