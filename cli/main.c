@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+int cloud_cmd_account(int argc, char *argv[]);
+
 
 static void
 print_usage ()
@@ -45,7 +47,11 @@ int main(int argc, char *argv[])
 		printf("cloud version %d.%d.%d\n", 0, 1, 0);
 		return 0;
 	}
+	
+	argc -= 2;
+	argv = &argv[2];
 	if (strcmp(command, "account") == 0) {
+		return cloud_cmd_account(argc, argv);
 	}
 	
 	fprintf(stderr, "Unknown command '%s'. Try cloud --help.\n", command);
