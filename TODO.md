@@ -1,0 +1,3 @@
+- read and write account information.
+- provide an interface to interact with accounts via cld_account_* calls.
+- don't use epoll in libcloud, so that clients may poll the fds themselves (e.g. in the GTK main loop).
