@@ -5,9 +5,13 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <string>
 #include <gtkmm/window.h>
 #include <gtkmm/builder.h>
+#include <gtkmm/buttonbox.h>
+#include <gtkmm/paned.h>
+#include <gtkmm/button.h>
 
 
 struct cld_client;
@@ -32,4 +36,11 @@ protected:
 	
 	AccountListWidget *accountList;
 	AddAccountPanel *addAccountPanel;
+	
+	Glib::RefPtr<Gtk::Paned> paned;
+	Glib::RefPtr<Gtk::ButtonBox> accountButtonBox;
+	std::set< Glib::RefPtr<Gtk::Button> > accountButtons;
+	
+	
+	void reloadAccountButtons();
 };

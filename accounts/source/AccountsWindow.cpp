@@ -32,8 +32,18 @@ AccountsWindow::AccountsWindow(
 	//Otherwise provide normal functionality.
 	else {
 		accountList = new AccountListWidget(this);
-		add(*accountList);
-		set_border_width(20);
+		/*add(*accountList);
+		set_border_width(20);*/
+		
+		Gtk::ButtonBox *accountButtonBox = new Gtk::ButtonBox;
+		this->accountButtonBox = Glib::RefPtr<Gtk::ButtonBox>(accountButtonBox);
+		accountButtonBox->set_orientation(Gtk::ORIENTATION_VERTICAL);
+		
+		Gtk::Paned *paned = new Gtk::Paned;
+		this->paned = Glib::RefPtr<Gtk::Paned>(paned);
+		paned->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+		paned->add1(*accountButtonBox);
+		add(*paned);
 		
 		addAccountPanel = new AddAccountPanel(this);
 		addAccountPanel->show();
@@ -62,4 +72,22 @@ void AccountsWindow::addAccount(AccountType *type)
 	cld_object_print(obj);
 	cld_client_account_set(cloud, obj);
 	cld_object_destroy(obj);
+	
+	reloadAccountButtons();
+}
+
+void AccountsWindow::reloadAccountButtons()
+{
+	std::vector<Gtk::Widget*> children = accountButtonBox->get_children();
+	for (int i = 0; i < children.size(); i++)
+		accountButtonBox->remove(*children[i]);
+	accountButtons.clear();
+	
+	for (std::map<std::string, Account*>::iterator it = accounts.begin(); it != accounts.end(); it++) {
+		Gtk::Button *button = new Gtk::Button;
+		button->set_label(it->second->getType()->getName());
+		accountButtonBox->add(*button);
+		accountButtons.insert(Glib::RefPtr<Gtk::Button>(button));
+	}
+	accountButtonBox->show_all_children();
 }
