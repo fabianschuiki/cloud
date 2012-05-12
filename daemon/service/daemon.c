@@ -9,25 +9,17 @@
 #include "daemon.h"
 #include "../service.h"
 #include "../socket.h"
-#include "../event-loop.h"
 #include "../connection.h"
 #include "../client.h"
 #include "../object.h"
 
-
-struct cld_daemon {
-	struct cld_service *service;
-	struct cld_socket *socket;
-	struct cld_event_source *source;
-	struct cld_connection *connection;
-};
 
 static int
 socket_data (int fd, int mask, void *data)
 {
 	struct cld_daemon *daemon = data;
 	
-	int len = cld_connection_data(daemon->connection, mask);
+	int len = cld_connection_communicate(daemon->connection, mask);
 	if (len < 0) {
 		cld_daemon_disconnect(daemon);
 		return 0;
@@ -77,12 +69,12 @@ cld_daemon_connect (struct cld_service *service)
 		return NULL;
 	}
 	
-	daemon->source = cld_event_loop_add_fd(service->loop, cld_socket_get_fd(daemon->socket), CLD_EVENT_READABLE, socket_data, daemon);
+	/*daemon->source = cld_event_loop_add_fd(service->loop, cld_socket_get_fd(daemon->socket), CLD_EVENT_READABLE, socket_data, daemon);
 	if (daemon->source == NULL) {
 		cld_socket_destroy(daemon->socket);
 		free(daemon);
 		return NULL;
-	}
+	}*/
 	
 	return daemon;
 }
@@ -90,7 +82,7 @@ cld_daemon_connect (struct cld_service *service)
 void
 cld_daemon_disconnect (struct cld_daemon *daemon)
 {
-	cld_event_source_remove(daemon->source);
+	//cld_event_source_remove(daemon->source);
 	cld_connection_destroy(daemon->connection);
 	cld_socket_destroy(daemon->socket);
 	free(daemon);

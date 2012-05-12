@@ -7,7 +7,6 @@
 
 #include "client.h"
 #include "socket.h"
-#include "event-loop.h"
 #include "client/daemon.h"
 #include "connection.h"
 #include "object.h"
@@ -22,16 +21,10 @@ cld_client_create ()
 	if (client == NULL)
 		return NULL;
 	
-	client->loop = cld_event_loop_create();
-	if (client->loop == NULL) {
-		free(client);
-		return NULL;
-	}
-	
 	client->daemon = cld_daemon_connect(client);
 	if (client->daemon == NULL) {
 		fprintf(stderr, "%s: unable to connect to cloud daemon\n", __FUNCTION__);
-		cld_event_loop_destroy(client->loop);
+		//cld_event_loop_destroy(client->loop);
 		free(client);
 		return NULL;
 	}
@@ -43,7 +36,6 @@ void
 cld_client_destroy (struct cld_client *client)
 {
 	cld_daemon_connect(client->daemon);
-	cld_event_loop_destroy(client->loop);
 	free(client);
 }
 
@@ -72,10 +64,10 @@ cld_client_account_list (struct cld_client *client)
 	
 	cld_object_set(req, "object", cld_object_create_string("accounts"));
 	
-	if (cld_connection_write(client->daemon->connection, req) < 0)
+	if (cld_connection_write_blocking(client->daemon->connection, req) < 0)
 		return NULL;
 	
-	struct cld_object *response = cld_connection_read(client->daemon->connection);
+	struct cld_object *response = cld_connection_read_blocking(client->daemon->connection);
 	if (response == NULL)
 		return NULL;
 	if (catch_error(__FUNCTION__, response) < 0)

@@ -2,6 +2,7 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
+#include <assert.h>
 #include <stddef.h>
 #include <errno.h>
 #include <stdio.h>
@@ -10,233 +11,155 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/signalfd.h>
+#include <sys/select.h>
 #include <signal.h>
 
 #include "util.h"
 #include "daemon.h"
-#include "event-loop.h"
 #include "socket.h"
 #include "daemon/client.h"
 #include "daemon/service.h"
+#include "run-loop.h"
+#include "fd-public.h"
+#include "list.h"
 
 
 struct cld_daemon *
 cld_daemon_create ()
 {
-	struct cld_daemon *d;
+	struct cld_daemon *daemon;
 	
-	d = malloc(sizeof *d);
-	if (d == NULL)
+	daemon = malloc(sizeof *daemon);
+	if (daemon == NULL)
 		return NULL;
 	
-	memset(d, 0, sizeof *d);
-	d->run = 1;
+	memset(daemon, 0, sizeof *daemon);
 	
-	d->loop = cld_event_loop_create();
-	if (d->loop == NULL) {
-		free(d);
+	daemon->client_socket = cld_socket_create(CLD_SOCKET_CLIENT);
+	if (daemon->client_socket == NULL) {
+		free(daemon);
+		return NULL;
+	}
+	if (cld_socket_listen(daemon->client_socket) < 0) {
+		cld_socket_destroy(daemon->client_socket);
+		free(daemon);
 		return NULL;
 	}
 	
-	return d;
+	daemon->service_socket = cld_socket_create(CLD_SOCKET_SERVICE);
+	if (daemon->service_socket == NULL) {
+		cld_socket_destroy(daemon->client_socket);
+		free(daemon);
+		return NULL;
+	}
+	if (cld_socket_listen(daemon->service_socket) < 0) {
+		cld_socket_destroy(daemon->client_socket);
+		cld_socket_destroy(daemon->service_socket);
+		free(daemon);
+		return NULL;
+	}
+	
+	daemon->clients = cld_list_create();
+	daemon->services = cld_list_create();
+	
+	return daemon;
 }
 
 void
-cld_daemon_destroy (struct cld_daemon *d)
+cld_daemon_destroy (struct cld_daemon *daemon)
 {
-	cld_event_loop_destroy(d->loop);
-	cld_socket_destroy(d->client_socket);
-	cld_socket_destroy(d->service_socket);
-	free(d);
+	cld_socket_destroy(daemon->client_socket);
+	cld_socket_destroy(daemon->service_socket);
+	
+	struct cld_list *list;
+	
+	list = daemon->clients;
+	daemon->clients = NULL;
+	struct cld_list_element *client = cld_list_begin(list);
+	for (; client; client = cld_list_next(client)) {
+		cld_client_destroy(client);
+	}
+	cld_list_destroy(list);
+	
+	list = daemon->services;
+	daemon->services = NULL;
+	struct cld_list_element *service = cld_list_begin(list);
+	for (; service; service = cld_list_next(service)) {
+		cld_client_destroy(service);
+	}
+	cld_list_destroy(list);
+	
+	free(daemon);
 }
 
-/*int
-socket_data (int fd, int mask, void *data)
+
+static void
+accept_connection (struct cld_daemon *daemon, struct cld_socket *socket)
 {
-	struct cld_daemon * daemon = data;
+	printf("accepting connection\n");
 	
 	struct sockaddr_un name;
 	socklen_t length = sizeof name;
-	int client_fd = accept(fd, (struct sockaddr *) &name, &length);
-	if (client_fd < 0) {
-		error("accept");
-	} else
-		cld_client_create(daemon, client_fd);
+	int fd = accept(cld_socket_get_fd(socket), (struct sockaddr *) &name, &length);
+	if (fd < 0) {
+		error("accept()");
+		return;
+	}
 	
-	return 1;
-}*/
+	if (socket == daemon->client_socket) {
+		//cld_client_create(daemon, fd);
+	}
+	else if (socket == daemon->service_socket) {
+		//cld_service_create(daemon, fd);
+	}
+	else {
+		assert(0 && "socket not part of daemon");
+	}
+	
+	close(fd);
+}
 
-static int
-client_data (int fd, int mask, void *data)
+
+/** Called by the run loop. Returns a list of file descriptors in use by the
+ * daemon that need to be monitored. Returns the client and service listening
+ * sockets, as well as the sockets of connected clients and services. */
+struct cld_fd *
+runloop_fd (int *count, void *data)
 {
 	struct cld_daemon *daemon = data;
 	
-	struct sockaddr_un name;
-	socklen_t length = sizeof name;
-	int client_fd = accept(fd, (struct sockaddr *) &name, &length);
-	if (client_fd < 0) {
-		error("accept");
-		return -1;
-	}
+	*count = 2;
 	
-	cld_client_create(daemon, client_fd);
+	struct cld_fd *fds = malloc(*count * sizeof(*fds));
+	if (fds == NULL)
+		return NULL;
+	
+	fds[0].fd = cld_socket_get_fd(daemon->client_socket);
+	fds[0].mask = CLD_FD_READ;
+	fds[1].fd = cld_socket_get_fd(daemon->service_socket);
+	fds[1].mask = CLD_FD_READ;
+	
+	return fds;
 }
 
-static int
-service_data (int fd, int mask, void *data)
+/** Called by the run loop whenever a file descriptor is ready for reading or
+ * writing. */
+void
+runloop_activity (struct cld_fd *fds, int num_fds, void *data)
 {
 	struct cld_daemon *daemon = data;
 	
-	struct sockaddr_un name;
-	socklen_t length = sizeof name;
-	int service_fd = accept(fd, (struct sockaddr *) &name, &length);
-	if (service_fd < 0) {
-		error("accept");
-		return -1;
+	int i;
+	for (i = 0; i < num_fds; i++) {
+		if (fds[i].fd == cld_socket_get_fd(daemon->client_socket))
+			accept_connection(daemon, daemon->client_socket);
+		else if (fds[i].fd == cld_socket_get_fd(daemon->service_socket))
+			accept_connection(daemon, daemon->service_socket);
+		else {
+			//TODO: handle connection in clients and services.
+		}
 	}
-	
-	cld_service_create(daemon, service_fd);
-}
-
-/** Opens the socket clients use to connect to the daemon and adds it to the event loop. */
-int
-cld_daemon_socket_client_open (struct cld_daemon *daemon)
-{
-	daemon->client_socket = cld_socket_create(CLD_SOCKET_CLIENT);
-	if (daemon->client_socket == NULL)
-		return -1;
-	
-	if (cld_socket_listen(daemon->client_socket) < 0) {
-		cld_socket_destroy(daemon->client_socket);
-		daemon->client_socket = NULL;
-		return -1;
-	}
-	
-	//Add the socket to the event loop so we are notified when new connections arrive.
-	daemon->client_source = cld_event_loop_add_fd(
-		daemon->loop,
-		cld_socket_get_fd(daemon->client_socket),
-		CLD_EVENT_READABLE,
-		client_data,
-		daemon);
-	if (daemon->client_source == NULL) {
-		cld_socket_destroy(daemon->client_socket);
-		daemon->client_socket = NULL;
-		return -1;
-	}
-	
-	return 0;
-}
-
-/** Opens the socket services use to connect to the daemon and adds it to the event loop. */
-int
-cld_daemon_socket_service_open (struct cld_daemon *daemon)
-{
-	daemon->service_socket = cld_socket_create(CLD_SOCKET_SERVICE);
-	if (daemon->service_socket == NULL)
-		return -1;
-	
-	if (cld_socket_listen(daemon->service_socket) < 0) {
-		cld_socket_destroy(daemon->service_socket);
-		daemon->service_socket = NULL;
-		return -1;
-	}
-	
-	//Add the socket to the event loop so we are notified when new connections arrive.
-	daemon->service_source = cld_event_loop_add_fd(
-		daemon->loop,
-		cld_socket_get_fd(daemon->service_socket),
-		CLD_EVENT_READABLE,
-		service_data,
-		daemon);
-	if (daemon->service_source == NULL) {
-		cld_socket_destroy(daemon->service_socket);
-		daemon->service_socket = NULL;
-		return -1;
-	}
-	
-	return 0;
-}
-
-
-/*int
-client_connection_data (int fd, int mask, void *data)
-{
-	struct cld_client *client = data;
-	struct cld_connection *connection = client->connection;
-	
-	int cmask = 0;
-	if (mask & CLD_EVENT_READABLE)
-		cmask |= CLD_CONNECTION_READABLE;
-	if (mask & CLD_EVENT_WRITABLE)
-		cmask |= CLD_CONNECTION_WRITABLE;
-	
-	int len = cld_connection_data(connection, cmask);
-	if (len < 0) {
-		//cld_client_destroy(client);
-		return 1;
-	}
-	
-	return 1;
-}
-
-int
-client_connection_update (struct cld_connection *connection, int mask, void *data)
-{
-	struct cld_client *client = data;
-	
-	int emask = 0;
-	if (mask & CLD_CONNECTION_READABLE)
-		emask |= CLD_EVENT_READABLE;
-	if (mask & CLD_CONNECTION_WRITABLE)
-		emask |= CLD_EVENT_WRITABLE;
-	
-	return cld_event_source_fd_update(client->source, emask);
-}*/
-
-/*struct cld_client *
-cld_client_create (struct cld_daemon *daemon, int fd)
-{
-	struct cld_client *client;
-	
-	client = malloc(sizeof *client);
-	if (client == NULL)
-		return NULL;
-	
-	memset(client, 0, sizeof *client);
-	client->daemon = daemon;
-	
-	client->connection = cld_connection_create(fd, cld_client_connection_update, client);
-	if (client->connection == NULL) {
-		free(client);
-		return NULL;
-	}
-	
-	client->source = cld_event_loop_add_fd(cld_daemon_get_event_loop(daemon), fd, CLD_EVENT_READABLE, cld_client_connection_data, client);
-	if (client->source == NULL) {
-		free(client);
-		return NULL;
-	}
-	
-	printf("connected to client %p\n", client);
-	
-	return client;
-}
-
-void cld_client_destroy (struct cld_client *client)
-{
-	printf("disconnect from client %p\n", client);
-	
-	cld_event_source_remove(client->source);
-	free(client);
-}*/
-
-
-int
-signal_quit (int signal_number, void *data)
-{
-	struct cld_daemon *d = data;
-	d->run = 0;
 }
 
 
@@ -246,25 +169,21 @@ int main(int argc, char* argv[])
 	
 	daemon = cld_daemon_create();
 	if (daemon == NULL)
-		return -1;
+		return 1;
 	
-	if (cld_daemon_socket_client_open(daemon) < 0)
-		return -1;
-	if (cld_daemon_socket_service_open(daemon) < 0)
-		return -1;
-	
-	cld_event_loop_add_signal(daemon->loop, SIGTERM, signal_quit, daemon);
-	cld_event_loop_add_signal(daemon->loop, SIGQUIT, signal_quit, daemon);
-	cld_event_loop_add_signal(daemon->loop, SIGINT, signal_quit, daemon);
-	
-	while (daemon->run) {
-		if (cld_event_loop_dispatch(daemon->loop) < 0)
-			return -1;
+	struct cld_runloop *loop = cld_runloop_create();
+	if (loop == NULL) {
+		fprintf(stderr, "unable to create runloop\n");
+		return 1;
 	}
 	
-	printf("terminating cloud daemon\n");
+	cld_runloop_callback_fd(loop, runloop_fd, daemon);
+	cld_runloop_callback_activity(loop, runloop_activity, daemon);
 	
+	int retval = cld_runloop_run(loop);
+	
+	printf("terminating\n");
 	cld_daemon_destroy(daemon);
 	
-	return 0;
+	return retval;
 }

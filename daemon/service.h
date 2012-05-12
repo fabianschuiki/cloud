@@ -11,7 +11,7 @@
 struct cld_service {
 	int run;
 	struct cld_daemon *daemon;
-	struct cld_event_loop *loop;
+	//struct cld_event_loop *loop;
 	
 	const char *name;
 };

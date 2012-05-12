@@ -21,7 +21,7 @@ socket_data (int fd, int mask, void *data)
 {
 	struct cld_service *service = data;
 	
-	int len = cld_connection_data(service->connection, mask);
+	int len = cld_connection_communicate(service->connection, mask);
 	if (len < 0) {
 		cld_service_destroy(service);
 		return 0;
@@ -84,12 +84,12 @@ cld_service_create (struct cld_daemon *daemon, int fd)
 		return NULL;
 	}
 	
-	service->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, service);
+	/*service->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, service);
 	if (service->source == NULL) {
 		cld_connection_destroy(service->connection);
 		free(service);
 		return NULL;
-	}
+	}*/
 	
 	printf("service connected %p\n", service);
 	
@@ -103,6 +103,6 @@ cld_service_destroy (struct cld_service *service)
 {
 	printf("service disconnected %p\n", service);
 	cld_connection_destroy(service->connection);
-	cld_event_source_remove(service->source);
+	//cld_event_source_remove(service->source);
 	free(service);
 }

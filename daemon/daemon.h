@@ -6,15 +6,15 @@
 #define CLOUD_DAEMON_H
 
 
+struct cld_socket;
+struct cld_list;
+
 struct cld_daemon {
 	struct cld_socket *client_socket;
 	struct cld_socket *service_socket;
 	
-	struct cld_event_source *client_source;
-	struct cld_event_source *service_source;
-	
-	struct cld_event_loop *loop;
-	int run;
+	struct cld_list *clients;
+	struct cld_list *services;
 };
 
 

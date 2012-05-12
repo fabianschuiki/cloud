@@ -14,6 +14,8 @@ extern "C" {
 
 
 @SERVICE_H@
+@FD_H@
+@RUNLOOP_H@
 
 
 #ifdef __cplusplus

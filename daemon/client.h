@@ -10,7 +10,6 @@
 
 struct cld_client {
 	struct cld_daemon *daemon;
-	struct cld_event_loop *loop;
 };
 
 

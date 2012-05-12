@@ -22,7 +22,7 @@ socket_data (int fd, int mask, void *data)
 {
 	struct cld_client *client = data;
 	
-	int len = cld_connection_data(client->connection, mask);
+	int len = cld_connection_communicate(client->connection, mask);
 	if (len < 0) {
 		cld_client_destroy(client);
 		return 0;
@@ -49,7 +49,7 @@ send_error (struct cld_client *client, const char *msg, ...)
 	}
 	
 	cld_object_set(error, "message", cld_object_create_string(formatted));
-	cld_connection_write(client->connection, error);
+	cld_connection_write_blocking(client->connection, error);
 	cld_object_destroy(error);
 }
 
@@ -83,7 +83,7 @@ handle_request (struct cld_client *client, struct cld_object *object)
 		cld_object_set(account, "uuid", cld_object_create_string("ebd47106"));
 		cld_object_array_add(accounts, account);
 		
-		cld_connection_write(client->connection, accounts);
+		cld_connection_write_blocking(client->connection, accounts);
 		cld_object_destroy(accounts);
 		return 0;
 	}
@@ -133,12 +133,12 @@ cld_client_create (struct cld_daemon *daemon, int fd)
 		return NULL;
 	}
 	
-	client->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, client);
+	/*client->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, client);
 	if (client->source == NULL) {
 		cld_connection_destroy(client->connection);
 		free(client);
 		return NULL;
-	}
+	}*/
 	
 	printf("client connected %p\n", client);
 	
@@ -152,6 +152,6 @@ cld_client_destroy (struct cld_client *client)
 {
 	printf("client disconnected %p\n", client);
 	cld_connection_destroy(client->connection);
-	cld_event_source_remove(client->source);
+	//cld_event_source_remove(client->source);
 	free(client);
 }
