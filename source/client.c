@@ -51,7 +51,7 @@ catch_error (const char *func, struct cld_object *response)
 void
 cld_client_account_set (struct cld_client *client, struct cld_object *account)
 {
-	cld_connection_write(client->daemon->connection, account);
+	cld_connection_write_blocking(client->daemon->connection, account);
 }
 
 struct cld_object *

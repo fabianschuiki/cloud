@@ -7,12 +7,14 @@
 #include <string.h>
 #include <cloud.h>
 
+#include "main.h"
+
 
 static void
 print_usage ()
 {
 	printf(
-"usage: cloud account <command> [<args>]\n"
+		"usage: cloud account <command> [<args>]\n"
 	);
 }
 
@@ -20,20 +22,35 @@ static void
 print_help ()
 {
 	print_usage();
-	printf(
-"\n"
-"The following commands are supported:\n"
-"   list    Show a list of cloud accounts\n"
+	printf("\n"
+		"The following commands are supported:\n"
+		"   add     Add a new account of the given type\n"
+		"   list    Show a list of cloud accounts\n"
 	);
+}
+
+int
+cloud_cmd_account_add (int argc, char *argv[])
+{
+	if (argc < 1) {
+		fprintf(stderr, "account type required\n");
+		return -1;
+	}
+	
+	struct cld_object *account = cld_object_create("account");
+	if (account == NULL)
+		return -1;
+	
+	cld_object_set(account, "type", cld_object_create_string(argv[0]));
+	cld_client_account_set(cloud, account);
+	cld_object_destroy(account);
+	
+	return 0;
 }
 
 int
 cloud_cmd_account_list (int argc, char *argv[])
 {
-	struct cld_client *cloud = cld_client_create();
-	if (cloud == NULL)
-		return -1;
-	
 	struct cld_object *accounts = cld_client_account_list(cloud);
 	if (accounts == NULL)
 		return -1;
@@ -69,6 +86,9 @@ cloud_cmd_account (int argc, char *argv[])
 	
 	argc--;
 	argv = &argv[1];
+	if (strcmp(command, "add") == 0) {
+		return cloud_cmd_account_add(argc, argv);
+	}
 	if (strcmp(command, "list") == 0) {
 		return cloud_cmd_account_list(argc, argv);
 	}

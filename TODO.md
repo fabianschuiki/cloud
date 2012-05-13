@@ -1,4 +1,3 @@
 - read and write account information.
 - provide an interface to interact with accounts via cld_account_* calls.
-- Use poll instead of epoll, which is easier to port to other operating systems.
-- Get rid of the event loop in libcloud. Provide an interface to access a set of file descriptors that need to be polled, so the GTK main loop or similar may pool the fds.
+- move cli into source directory
