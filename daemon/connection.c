@@ -68,9 +68,9 @@ parse_object (struct cld_connection *connection)
 }
 
 static int
-communicate (struct cld_connection *connection, int dir)
+communicate (struct cld_connection *connection, int mask)
 {
-	if (dir & CLD_FD_WRITE) {
+	if (mask & CLD_FD_WRITE) {
 		ssize_t num = write(connection->fd, connection->outbuf->data, connection->outbuf->length);
 		if (num < 0) {
 			error("write()");
@@ -86,7 +86,7 @@ communicate (struct cld_connection *connection, int dir)
 		return 0;
 	}
 	
-	if (dir & CLD_FD_READ) {
+	if (mask & CLD_FD_READ) {
 		char buffer[4096];
 		ssize_t num = read(connection->fd, buffer, 4096);
 		if (num < 0) {

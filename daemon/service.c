@@ -5,12 +5,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 
 #include "service.h"
 #include "socket.h"
 #include "connection.h"
 #include "service/daemon.h"
 #include "fd-public.h"
+#include "object.h"
+
+
+static int
+connection_received (struct cld_object *object, void *data)
+{
+	struct cld_service *service = data;
+	printf("daemon sent ", service);
+	cld_object_print(object);
+	cld_object_destroy(object);
+	return 1;
+}
+
+static void
+connection_disconnected (void *data)
+{
+	fprintf(stderr, "*** daemon disconnect not handled\n");
+}
 
 
 struct cld_service *
@@ -22,17 +41,23 @@ cld_service_create ()
 	if (service == NULL)
 		return NULL;
 	
-	service->run = 1;
+	memset(service, 0, sizeof *service);
 	
-	/*service->loop = cld_event_loop_create();
-	if (service->loop == NULL) {
+	service->socket = cld_socket_create(CLD_SOCKET_SERVICE);
+	if (service->socket == NULL) {
 		free(service);
 		return NULL;
-	}*/
+	}
 	
-	service->daemon = cld_daemon_connect(service);
-	if (service->daemon == NULL) {
-		//cld_event_loop_destroy(service->loop);
+	if (cld_socket_connect(service->socket) < 0) {
+		cld_socket_destroy(service->socket);
+		free(service);
+		return NULL;
+	}
+	
+	service->connection = cld_connection_create(cld_socket_get_fd(service->socket), connection_received, connection_disconnected, service);
+	if (service->connection == NULL) {
+		cld_socket_destroy(service->socket);
 		free(service);
 		return NULL;
 	}
@@ -43,8 +68,6 @@ cld_service_create ()
 void
 cld_service_destroy (struct cld_service *service)
 {
-	cld_daemon_disconnect(service->daemon);
-	//cld_event_loop_destroy(service->loop);
 	free(service);
 }
 
@@ -61,47 +84,33 @@ cld_service_get_fds (struct cld_service *service, int *count)
 	if (fds == NULL)
 		return NULL;
 	
-	fds[0].fd = service->daemon->connection->fd;
-	fds[0].mask = CLD_FD_READ;
+	fds[0].fd = service->connection->fd;
+	fds[0].mask = service->connection->mask;
 	
 	return fds;
 }
 
-void
-cld_service_poll (struct cld_service *service)
+void cld_service_communicate(struct cld_service *service, struct cld_fd *fds, int count)
 {
-}
-
-static int
-signal_terminate (int signal_number, void *data)
-{
-	struct cld_service *service = data;
-	service->run = 0;
-}
-
-int
-cld_service_run (struct cld_service *service)
-{
-	/*cld_event_loop_add_signal(service->loop, SIGTERM, signal_terminate, service);
-	cld_event_loop_add_signal(service->loop, SIGQUIT, signal_terminate, service);
-	cld_event_loop_add_signal(service->loop, SIGINT, signal_terminate, service);
-	
-	cld_daemon_send_service_record(service->daemon, service->name);
-	
-	while (service->run) {
-		if (cld_event_loop_dispatch(service->loop) < 0)
-			return -1;
+	int i;
+	for (i = 0; i < count; i++) {
+		if (service->connection->fd == fds[i].fd)
+			cld_connection_communicate(service->connection, fds[i].mask);
 	}
-	
-	printf("gracefully terminating service\n");*/
-	
-	printf("ignoring deprecated cld_service_run\n");
-	return 0;
 }
 
 void
 cld_service_set_name (struct cld_service *service, const char *name)
 {
 	service->name = name;
-	//TODO: inform daemon of updated name.
+}
+
+void
+cld_service_send_descriptor (struct cld_service *service)
+{
+	struct cld_object *desc = cld_object_create("service");
+	
+	cld_object_set(desc, "name", cld_object_create_string(service->name));
+	
+	cld_connection_write(service->connection, desc);
 }

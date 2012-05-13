@@ -49,5 +49,4 @@ add_library(cloud-service
 	run-loop.c
 	connection.c
 	object.c
-	buffer.c
-	service/daemon.c)
+	buffer.c)

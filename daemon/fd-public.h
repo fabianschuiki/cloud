@@ -9,5 +9,5 @@ enum {
 
 struct cld_fd {
 	int fd;
-	unsigned int mask;
+	int mask;
 };

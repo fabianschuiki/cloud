@@ -27,7 +27,7 @@ struct cld_connection {
 struct cld_connection *cld_connection_create (int fd, cld_connection_received_func_t received, cld_connection_disconnected_func_t disconnected, void *data);
 void cld_connection_destroy (struct cld_connection *connection);
 
-int cld_connection_communicate (struct cld_connection *connection, int dir);
+int cld_connection_communicate (struct cld_connection *connection, int mask);
 int cld_connection_write(struct cld_connection *connection, struct cld_object *object);
 
 int cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object);
