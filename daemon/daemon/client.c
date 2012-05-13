@@ -9,27 +9,9 @@
 
 #include "client.h"
 #include "../daemon.h"
-#include "../event-loop.h"
 #include "../connection.h"
 #include "../object.h"
 
-
-/** Called by the event loop whenever there is traffic on the client's socket.
- * Routes the traffic through to the client's connection. May destroy the
- * client if a disconnect is detected. */
-static int
-socket_data (int fd, int mask, void *data)
-{
-	struct cld_client *client = data;
-	
-	int len = cld_connection_communicate(client->connection, mask);
-	if (len < 0) {
-		cld_client_destroy(client);
-		return 0;
-	}
-	
-	return len;
-}
 
 static void
 send_error (struct cld_client *client, const char *msg, ...)
@@ -49,7 +31,7 @@ send_error (struct cld_client *client, const char *msg, ...)
 	}
 	
 	cld_object_set(error, "message", cld_object_create_string(formatted));
-	cld_connection_write_blocking(client->connection, error);
+	cld_connection_write(client->connection, error);
 	cld_object_destroy(error);
 }
 
@@ -83,7 +65,7 @@ handle_request (struct cld_client *client, struct cld_object *object)
 		cld_object_set(account, "uuid", cld_object_create_string("ebd47106"));
 		cld_object_array_add(accounts, account);
 		
-		cld_connection_write_blocking(client->connection, accounts);
+		cld_connection_write(client->connection, accounts);
 		cld_object_destroy(accounts);
 		return 0;
 	}
@@ -94,7 +76,7 @@ handle_request (struct cld_client *client, struct cld_object *object)
 
 /** Called by the client's connection whenever a message is received. */
 static int
-message_received (struct cld_object *object, void *data)
+connection_received (struct cld_object *object, void *data)
 {
 	struct cld_client *client = data;
 	printf("client %p sent ", client);
@@ -113,6 +95,13 @@ message_received (struct cld_object *object, void *data)
 	return result;
 }
 
+static void
+connection_disconnected (void *data)
+{
+	struct cld_client *client= data;
+	cld_daemon_disconnect_client(client->daemon, client);
+}
+
 /** Creates a new client within the given daemon, communicating through fd. */
 struct cld_client *
 cld_client_create (struct cld_daemon *daemon, int fd)
@@ -127,18 +116,11 @@ cld_client_create (struct cld_daemon *daemon, int fd)
 	client->daemon = daemon;
 	client->fd = fd;
 	
-	client->connection = cld_connection_create(fd, message_received, client);
+	client->connection = cld_connection_create(fd, connection_received, connection_disconnected, client);
 	if (client->connection == NULL) {
 		free(client);
 		return NULL;
 	}
-	
-	/*client->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, client);
-	if (client->source == NULL) {
-		cld_connection_destroy(client->connection);
-		free(client);
-		return NULL;
-	}*/
 	
 	printf("client connected %p\n", client);
 	
@@ -152,6 +134,5 @@ cld_client_destroy (struct cld_client *client)
 {
 	printf("client disconnected %p\n", client);
 	cld_connection_destroy(client->connection);
-	//cld_event_source_remove(client->source);
 	free(client);
 }

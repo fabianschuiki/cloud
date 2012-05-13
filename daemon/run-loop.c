@@ -43,7 +43,8 @@ cld_runloop_create ()
 	
 	memset(loop, 0, sizeof *loop);
 	loop->run = 1;
-	loop->timeout = -1;
+	//loop->timeout = -1;
+	loop->timeout = 3000000;
 	
 	sigset_t mask;
 	sigemptyset(&mask);
@@ -180,6 +181,7 @@ cld_runloop_run (struct cld_runloop *loop)
 		else {
 			if (loop->idle)
 				loop->idle(loop->idle_data);
+			printf("runloop idle\n");
 		}
 		
 		free(fds);

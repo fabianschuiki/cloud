@@ -11,7 +11,6 @@ struct cld_daemon;
 struct cld_client {
 	struct cld_daemon *daemon;
 	int fd;
-	struct cld_event_source *source;
 	struct cld_connection *connection;
 };
 

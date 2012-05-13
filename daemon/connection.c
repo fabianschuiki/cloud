@@ -16,7 +16,7 @@
 
 
 struct cld_connection *
-cld_connection_create (int fd, cld_connection_received_func_t received, void *data)
+cld_connection_create (int fd, cld_connection_received_func_t received, cld_connection_disconnected_func_t disconnected, void *data)
 {
 	struct cld_connection *connection;
 	
@@ -26,8 +26,9 @@ cld_connection_create (int fd, cld_connection_received_func_t received, void *da
 	
 	connection->fd = fd;
 	connection->received = received;
+	connection->disconnected = disconnected;
 	connection->data = data;
-	connection->dir = CLD_FD_READ;
+	connection->mask = CLD_FD_READ;
 	
 	connection->inbuf = cld_buffer_create();
 	connection->outbuf = cld_buffer_create();
@@ -46,22 +47,6 @@ cld_connection_destroy (struct cld_connection *connection)
 	cld_buffer_destroy(connection->outbuf);
 	free(connection);
 }
-
-/*int
-read_data (struct cld_connection *connection)
-{
-	char buffer[4096];
-	int len = read(connection->fd, buffer, 4096);
-	if (len <= 0) {
-		close(connection->fd);
-		connection->fd = 0;
-		return -1;
-	}
-	
-	cld_buffer_put(connection->inbuf, buffer, len);
-	
-	return 1;
-}*/
 
 struct cld_object *
 parse_object (struct cld_connection *connection)
@@ -85,6 +70,8 @@ parse_object (struct cld_connection *connection)
 int
 cld_connection_communicate (struct cld_connection *connection, int dir)
 {
+	printf("%s: connection %p, mask = %x\n", __FUNCTION__, connection, dir);
+	
 	if (dir & CLD_FD_WRITE) {
 		ssize_t num = write(connection->fd, connection->outbuf->data, connection->outbuf->length);
 		if (num < 0) {
@@ -96,7 +83,7 @@ cld_connection_communicate (struct cld_connection *connection, int dir)
 		free(sent);
 		
 		if (connection->outbuf->length == 0)
-			connection->dir &= ~CLD_FD_WRITE;
+			connection->mask &= ~CLD_FD_WRITE;
 		
 		return 0;
 	}
@@ -112,7 +99,8 @@ cld_connection_communicate (struct cld_connection *connection, int dir)
 			printf("connection %p peer hung up\n", connection);
 			close(connection->fd);
 			connection->fd = 0;
-			return -1;
+			connection->disconnected(connection->data);
+			return 0;
 		}
 		
 		cld_buffer_put(connection->inbuf, buffer, num);
@@ -148,7 +136,7 @@ cld_connection_write (struct cld_connection *connection, struct cld_object *obje
 		return -1;
 	
 	cld_buffer_put(connection->outbuf, buffer->data, buffer->length);
-	connection->dir |= CLD_FD_WRITE;
+	connection->mask |= CLD_FD_WRITE;
 	
 	return 0;
 }

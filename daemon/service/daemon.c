@@ -14,7 +14,7 @@
 #include "../object.h"
 
 
-static int
+/*static int
 socket_data (int fd, int mask, void *data)
 {
 	struct cld_daemon *daemon = data;
@@ -26,16 +26,22 @@ socket_data (int fd, int mask, void *data)
 	}
 	
 	return len;
-}
+}*/
 
 static int
-message_received (struct cld_object *object, void *data)
+connection_received (struct cld_object *object, void *data)
 {
 	struct cld_service *daemon = data;
 	printf("daemon %p sent ", daemon);
 	cld_object_print(object);
 	cld_object_destroy(object);
 	return 1;
+}
+
+static void
+connection_disconnected (void *data)
+{
+	fprintf(stderr, "*** daemon disconnect not handled\n");
 }
 
 struct cld_daemon *
@@ -62,19 +68,12 @@ cld_daemon_connect (struct cld_service *service)
 		return NULL;
 	}
 	
-	daemon->connection = cld_connection_create(cld_socket_get_fd(daemon->socket), message_received, daemon);
+	daemon->connection = cld_connection_create(cld_socket_get_fd(daemon->socket), connection_received, connection_disconnected, daemon);
 	if (daemon->connection == NULL) {
 		cld_socket_destroy(daemon->socket);
 		free(daemon);
 		return NULL;
 	}
-	
-	/*daemon->source = cld_event_loop_add_fd(service->loop, cld_socket_get_fd(daemon->socket), CLD_EVENT_READABLE, socket_data, daemon);
-	if (daemon->source == NULL) {
-		cld_socket_destroy(daemon->socket);
-		free(daemon);
-		return NULL;
-	}*/
 	
 	return daemon;
 }
@@ -82,7 +81,6 @@ cld_daemon_connect (struct cld_service *service)
 void
 cld_daemon_disconnect (struct cld_daemon *daemon)
 {
-	//cld_event_source_remove(daemon->source);
 	cld_connection_destroy(daemon->connection);
 	cld_socket_destroy(daemon->socket);
 	free(daemon);

@@ -11,18 +11,20 @@
 struct cld_object;
 struct cld_buffer;
 typedef int (*cld_connection_received_func_t) (struct cld_object *object, void *data);
+typedef void (*cld_connection_disconnected_func_t) (void *data);
 
 struct cld_connection {
 	int fd;
-	int dir;
+	int mask;
 	cld_connection_received_func_t received;
+	cld_connection_disconnected_func_t disconnected;
 	void *data;
 	
 	struct cld_buffer *inbuf;
 	struct cld_buffer *outbuf;
 };
 
-struct cld_connection *cld_connection_create (int fd, cld_connection_received_func_t received, void *data);
+struct cld_connection *cld_connection_create (int fd, cld_connection_received_func_t received, cld_connection_disconnected_func_t disconnected, void *data);
 void cld_connection_destroy (struct cld_connection *connection);
 
 int cld_connection_communicate (struct cld_connection *connection, int dir);

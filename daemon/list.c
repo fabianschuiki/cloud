@@ -8,12 +8,6 @@
 #include "list.h"
 
 
-struct cld_list_element {
-	struct cld_list_element *next;
-	struct cld_list_element *prev;
-	void *object;
-};
-
 struct cld_list_element *
 cld_list_element_create (void *object)
 {
@@ -75,4 +69,44 @@ struct cld_list_element *
 cld_list_next (struct cld_list_element *element)
 {
 	return element->next;
+}
+
+
+void
+cld_list_add (struct cld_list *list, void *object)
+{
+	struct cld_list_element *element = cld_list_element_create(object);
+	if (element == NULL)
+		return;
+	
+	element->prev = list->last;
+	if (list->last)
+		list->last->next = element;
+	if (list->first == NULL)
+		list->first = element;
+	list->last = element;
+}
+
+void
+cld_list_remove (struct cld_list *list, void *object)
+{
+	struct cld_list_element *element = list->first;
+	for (; element && element->object != object; element = element->next);
+	if (element == NULL)
+		return;
+	
+	if (element->prev) element->prev->next = element->next;
+	if (element->next) element->next->prev = element->prev;
+	if (list->first == element) list->first = element->next;
+	if (list->last  == element) list->last  = element->prev;
+}
+
+
+int
+cld_list_count (struct cld_list *list)
+{
+	struct cld_list_element *element = list->first;
+	int c = 0;
+	for (; element; element = element->next, c++);
+	return c;
 }

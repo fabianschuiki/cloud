@@ -32,7 +32,7 @@ socket_data (int fd, int mask, void *data)
 
 /** Called by the service's connection whenever a message is received. */
 static int
-message_received (struct cld_object *object, void *data)
+connection_received (struct cld_object *object, void *data)
 {
 	struct cld_service *service = data;
 	printf("service %p sent ", service);
@@ -64,6 +64,13 @@ message_received (struct cld_object *object, void *data)
 	return 1;
 }
 
+static void
+connection_disconnected (void *data)
+{
+	struct cld_service *service = data;
+	cld_daemon_disconnect_service(service->daemon, service);
+}
+
 /** Creates a new service within the given daemon, communicating through fd. */
 struct cld_service *
 cld_service_create (struct cld_daemon *daemon, int fd)
@@ -78,18 +85,11 @@ cld_service_create (struct cld_daemon *daemon, int fd)
 	service->daemon = daemon;
 	service->fd = fd;
 	
-	service->connection = cld_connection_create(fd, message_received, service);
+	service->connection = cld_connection_create(fd, connection_received, connection_disconnected, service);
 	if (service->connection == NULL) {
 		free(service);
 		return NULL;
 	}
-	
-	/*service->source = cld_event_loop_add_fd(daemon->loop, fd, CLD_EVENT_READABLE, socket_data, service);
-	if (service->source == NULL) {
-		cld_connection_destroy(service->connection);
-		free(service);
-		return NULL;
-	}*/
 	
 	printf("service connected %p\n", service);
 	
@@ -103,6 +103,5 @@ cld_service_destroy (struct cld_service *service)
 {
 	printf("service disconnected %p\n", service);
 	cld_connection_destroy(service->connection);
-	//cld_event_source_remove(service->source);
 	free(service);
 }

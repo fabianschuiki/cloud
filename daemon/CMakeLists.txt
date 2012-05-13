@@ -31,6 +31,7 @@ add_executable(cloudd
 	run-loop.c
 	object.c
 	buffer.c
+	list.c
 	connection.c)
 
 add_library(cloud

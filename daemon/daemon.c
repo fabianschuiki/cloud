@@ -23,6 +23,7 @@
 #include "run-loop.h"
 #include "fd-public.h"
 #include "list.h"
+#include "connection.h"
 
 
 struct cld_daemon *
@@ -62,6 +63,7 @@ cld_daemon_create ()
 	
 	daemon->clients = cld_list_create();
 	daemon->services = cld_list_create();
+	daemon->connections = cld_list_create();
 	
 	return daemon;
 }
@@ -72,25 +74,38 @@ cld_daemon_destroy (struct cld_daemon *daemon)
 	cld_socket_destroy(daemon->client_socket);
 	cld_socket_destroy(daemon->service_socket);
 	
-	struct cld_list *list;
+	cld_list_destroy(daemon->connections);
 	
-	list = daemon->clients;
-	daemon->clients = NULL;
-	struct cld_list_element *client = cld_list_begin(list);
+	struct cld_list_element *client = cld_list_begin(daemon->clients);
 	for (; client; client = cld_list_next(client)) {
-		cld_client_destroy(client);
+		cld_client_destroy(client->object);
 	}
-	cld_list_destroy(list);
+	cld_list_destroy(daemon->clients);
 	
-	list = daemon->services;
-	daemon->services = NULL;
-	struct cld_list_element *service = cld_list_begin(list);
+	struct cld_list_element *service = cld_list_begin(daemon->services);
 	for (; service; service = cld_list_next(service)) {
-		cld_client_destroy(service);
+		cld_client_destroy(service->object);
 	}
-	cld_list_destroy(list);
+	cld_list_destroy(daemon->services);
 	
 	free(daemon);
+}
+
+
+void
+cld_daemon_disconnect_client (struct cld_daemon *daemon, struct cld_client *client)
+{
+	cld_list_remove(daemon->clients, client);
+	cld_list_remove(daemon->connections, client->connection);
+	cld_client_destroy(client);
+}
+
+void
+cld_daemon_disconnect_service (struct cld_daemon *daemon, struct cld_service *service)
+{
+	cld_list_remove(daemon->services, service);
+	cld_list_remove(daemon->connections, service->connection);
+	cld_service_destroy(service);
 }
 
 
@@ -108,16 +123,18 @@ accept_connection (struct cld_daemon *daemon, struct cld_socket *socket)
 	}
 	
 	if (socket == daemon->client_socket) {
-		//cld_client_create(daemon, fd);
+		struct cld_client *client = cld_client_create(daemon, fd);
+		cld_list_add(daemon->clients, client);
+		cld_list_add(daemon->connections, client->connection);
 	}
 	else if (socket == daemon->service_socket) {
-		//cld_service_create(daemon, fd);
+		struct cld_service *service = cld_service_create(daemon, fd);
+		cld_list_add(daemon->services, service);
+		cld_list_add(daemon->connections, service->connection);
 	}
 	else {
 		assert(0 && "socket not part of daemon");
 	}
-	
-	close(fd);
 }
 
 
@@ -129,7 +146,7 @@ runloop_fd (int *count, void *data)
 {
 	struct cld_daemon *daemon = data;
 	
-	*count = 2;
+	*count = 2 + cld_list_count(daemon->connections);
 	
 	struct cld_fd *fds = malloc(*count * sizeof(*fds));
 	if (fds == NULL)
@@ -139,6 +156,15 @@ runloop_fd (int *count, void *data)
 	fds[0].mask = CLD_FD_READ;
 	fds[1].fd = cld_socket_get_fd(daemon->service_socket);
 	fds[1].mask = CLD_FD_READ;
+	
+	int i = 2;
+	struct cld_list_element *element = cld_list_begin(daemon->connections);
+	for (; element; element = cld_list_next(element)) {
+		struct cld_connection *connection = element->object;
+		fds[i].fd = connection->fd;
+		fds[i].mask = connection->mask;
+		i++;
+	}
 	
 	return fds;
 }
@@ -157,7 +183,13 @@ runloop_activity (struct cld_fd *fds, int num_fds, void *data)
 		else if (fds[i].fd == cld_socket_get_fd(daemon->service_socket))
 			accept_connection(daemon, daemon->service_socket);
 		else {
-			//TODO: handle connection in clients and services.
+			struct cld_list_element *element = cld_list_begin(daemon->connections);
+			while (element) {
+				struct cld_connection *connection = element->object;
+				element = cld_list_next(element);
+				if (connection->fd == fds[i].fd)
+					cld_connection_communicate(connection, fds[i].mask);
+			}
 		}
 	}
 }
