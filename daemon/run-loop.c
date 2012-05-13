@@ -181,7 +181,6 @@ cld_runloop_run (struct cld_runloop *loop)
 		else {
 			if (loop->idle)
 				loop->idle(loop->idle_data);
-			printf("runloop idle\n");
 		}
 		
 		free(fds);

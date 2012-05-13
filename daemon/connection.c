@@ -67,11 +67,9 @@ parse_object (struct cld_connection *connection)
 	return NULL;
 }
 
-int
-cld_connection_communicate (struct cld_connection *connection, int dir)
+static int
+communicate (struct cld_connection *connection, int dir)
 {
-	printf("%s: connection %p, mask = %x\n", __FUNCTION__, connection, dir);
-	
 	if (dir & CLD_FD_WRITE) {
 		ssize_t num = write(connection->fd, connection->outbuf->data, connection->outbuf->length);
 		if (num < 0) {
@@ -107,6 +105,15 @@ cld_connection_communicate (struct cld_connection *connection, int dir)
 		
 		return 0;
 	}
+}
+
+int
+cld_connection_communicate (struct cld_connection *connection, int dir)
+{
+	int retval = communicate(connection, dir);
+	if (retval == 0 && dir & CLD_FD_READ)
+		cld_connection_parse_objects(connection);
+	return retval;
 }
 
 /** Parses the connection's input buffer into objects. For each object parsed,
@@ -167,7 +174,7 @@ cld_connection_read_blocking (struct cld_connection *connection)
 {
 	struct cld_object *object = parse_object(connection);
 	while (object == NULL) {
-		if (cld_connection_communicate(connection, CLD_FD_READ) < 0)
+		if (communicate(connection, CLD_FD_READ) < 0)
 			return NULL;
 		object = parse_object(connection);
 	}

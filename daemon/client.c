@@ -24,7 +24,6 @@ cld_client_create ()
 	client->daemon = cld_daemon_connect(client);
 	if (client->daemon == NULL) {
 		fprintf(stderr, "%s: unable to connect to cloud daemon\n", __FUNCTION__);
-		//cld_event_loop_destroy(client->loop);
 		free(client);
 		return NULL;
 	}
@@ -35,7 +34,7 @@ cld_client_create ()
 void
 cld_client_destroy (struct cld_client *client)
 {
-	cld_daemon_connect(client->daemon);
+	cld_daemon_disconnect(client->daemon);
 	free(client);
 }
 
