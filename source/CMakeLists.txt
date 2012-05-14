@@ -21,9 +21,10 @@ read_header (run-loop-public.h RUNLOOP_H)
 
 configure_file (cloud.h.in ${PROJECT_BINARY_DIR}/cloud.h)
 configure_file (cloud-service.h.in ${PROJECT_BINARY_DIR}/cloud-service.h)
+include_directories (${PROJECT_BINARY_DIR})
 
 
-add_executable(cloudd
+add_executable (cloudd
 	daemon.c
 	socket.c
 	daemon/client.c
@@ -34,7 +35,7 @@ add_executable(cloudd
 	list.c
 	connection.c)
 
-add_library(cloud
+add_library (cloud
 	client.c
 	socket.c
 	connection.c
@@ -43,10 +44,17 @@ add_library(cloud
 	buffer.c
 	client/daemon.c)
 
-add_library(cloud-service
+add_library (cloud-service
 	service.c
 	socket.c
 	run-loop.c
 	connection.c
 	object.c
 	buffer.c)
+
+add_executable (cloud-cli
+	cli/main.c
+	cli/option-parser.c
+	cli/account.c)
+set_target_properties (cloud-cli PROPERTIES OUTPUT_NAME cloud)
+target_link_libraries (cloud-cli cloud)
