@@ -168,6 +168,7 @@ cld_daemon_accounts_load (struct cld_daemon *daemon)
 	
 	cld_object_destroy(daemon->accounts);
 	daemon->accounts = accounts;
+	cld_object_print(accounts);
 }
 
 

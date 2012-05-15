@@ -73,6 +73,30 @@ struct cld_object {
 };
 
 
+static void
+add_field (struct cld_object *object, struct cld_field *field)
+{
+	assert(field->next == NULL && field->prev == NULL);
+	
+	field->prev = object->field_tail;
+	if (object->field_tail)
+		object->field_tail->next = field;
+	object->field_tail = field;
+	
+	if (object->field_head == NULL)
+		object->field_head = field;
+}
+
+static void
+remove_field (struct cld_object *object, struct cld_field *field)
+{
+	if (field->next) field->next->prev = field->prev;
+	if (field->prev) field->prev->next = field->next;
+	if (object->field_head == field) object->field_head = field->next;
+	if (object->field_tail == field) object->field_tail = field->prev;
+}
+
+
 struct cld_object *
 cld_object_create (const char *type)
 {
@@ -113,6 +137,30 @@ cld_object_create_array ()
 	return cld_object_create(CLD_OBJECT_ARRAY_TYPE);
 }
 
+struct cld_object *
+cld_object_copy (struct cld_object *object)
+{
+	struct cld_object *copy;
+	
+	copy = cld_object_create(object->type);
+	if (copy == NULL)
+		return NULL;
+	
+	if (cld_object_is_string(object)) {
+		copy->str = strdup(object->str);
+	}
+	else {
+		struct cld_field *field = object->field_head;
+		for (; field; field = field->next) {
+			struct cld_field *cf = cld_field_create(field->name);
+			cf->object = cld_object_copy(field->object);
+			add_field(copy, cf);
+		}
+	}
+	
+	return copy;
+}
+
 void
 cld_object_destroy (struct cld_object *object)
 {
@@ -132,30 +180,6 @@ cld_object_destroy (struct cld_object *object)
 	if (object->type)
 		free(object->type);
 	free(object);
-}
-
-
-static void
-add_field (struct cld_object *object, struct cld_field *field)
-{
-	assert(field->next == NULL && field->prev == NULL);
-	
-	field->prev = object->field_tail;
-	if (object->field_tail)
-		object->field_tail->next = field;
-	object->field_tail = field;
-	
-	if (object->field_head == NULL)
-		object->field_head = field;
-}
-
-static void
-remove_field (struct cld_object *object, struct cld_field *field)
-{
-	if (field->next) field->next->prev = field->prev;
-	if (field->prev) field->prev->next = field->next;
-	if (object->field_head == field) object->field_head = field->next;
-	if (object->field_tail == field) object->field_tail = field->prev;
 }
 
 

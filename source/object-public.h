@@ -7,6 +7,7 @@ struct cld_object;
 struct cld_object *cld_object_create(const char *type);
 struct cld_object *cld_object_create_string(const char *string);
 struct cld_object *cld_object_create_array();
+struct cld_object *cld_object_copy(struct cld_object *object);
 void cld_object_destroy(struct cld_object *object);
 
 int cld_object_is (struct cld_object *object, const char *type);

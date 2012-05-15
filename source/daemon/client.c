@@ -51,19 +51,12 @@ handle_request (struct cld_client *client, struct cld_object *object)
 		if (accounts == NULL)
 			return -1;
 		
-		struct cld_object *account = cld_object_create("account");
-		cld_object_set(account, "type", cld_object_create_string("twitter"));
-		cld_object_set(account, "username", cld_object_create_string("fabianschuiki"));
-		cld_object_set(account, "token", cld_object_create_string("assdth684dsrhdfzk84sdrh"));
-		cld_object_set(account, "uuid", cld_object_create_string("925b7d25"));
-		cld_object_array_add(accounts, account);
-		
-		account = cld_object_create("account");
-		cld_object_set(account, "type", cld_object_create_string("wordpress"));
-		cld_object_set(account, "username", cld_object_create_string("fabianschuiki"));
-		cld_object_set(account, "password", cld_object_create_string("my_wordpress_password"));
-		cld_object_set(account, "uuid", cld_object_create_string("ebd47106"));
-		cld_object_array_add(accounts, account);
+		int num_accounts = cld_object_array_count(client->daemon->accounts);
+		int i;
+		for (i = 0; i < num_accounts; i++) {
+			cld_object_array_add(accounts, cld_object_copy(cld_object_array_get(client->daemon->accounts, i)));
+		}
+		cld_object_print(accounts);
 		
 		cld_connection_write(client->connection, accounts);
 		cld_object_destroy(accounts);
