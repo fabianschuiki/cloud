@@ -37,13 +37,21 @@ cloud_cmd_account_add (int argc, char *argv[])
 		return -1;
 	}
 	
-	struct cld_object *account = cld_object_create("account");
+	/*struct cld_object *account = cld_object_create("account");
 	if (account == NULL)
 		return -1;
 	
 	cld_object_set(account, "type", cld_object_create_string(argv[0]));
 	cld_client_account_set(cloud, account);
-	cld_object_destroy(account);
+	cld_object_destroy(account);*/
+	
+	struct cld_account *account = cld_client_add_account(cloud, argv[0]);
+	if (account == NULL) {
+		fprintf(stderr, "unable to create account\n");
+		return -1;
+	}
+	
+	printf("%s\n", cld_account_get_id(account));
 	
 	return 0;
 }

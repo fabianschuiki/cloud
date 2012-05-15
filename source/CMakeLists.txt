@@ -15,9 +15,10 @@ endmacro ()
 
 read_header (service-public.h SERVICE_H)
 read_header (object-public.h OBJECT_H)
-read_header (client-public.h CLIENT_H)
+read_header (client/client-public.h CLIENT_H)
 read_header (fd-public.h FD_H)
 read_header (run-loop-public.h RUNLOOP_H)
+read_header (account-public.h ACCOUNT_H)
 
 configure_file (cloud.h.in ${PROJECT_BINARY_DIR}/cloud.h)
 configure_file (cloud-service.h.in ${PROJECT_BINARY_DIR}/cloud-service.h)
@@ -36,12 +37,14 @@ add_executable (cloudd
 	connection.c)
 
 add_library (cloud
-	client.c
+	client/client.c
 	socket.c
 	connection.c
 	run-loop.c
 	object.c
 	buffer.c
+	account.c
+	list.c
 	client/daemon.c)
 
 add_library (cloud-service

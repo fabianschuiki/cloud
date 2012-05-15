@@ -17,6 +17,7 @@ extern "C" {
 @OBJECT_H@
 @FD_H@
 @RUNLOOP_H@
+@ACCOUNT_H@
 
 
 #ifdef __cplusplus

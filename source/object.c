@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "client.h"
 #include "object.h"
 #include "buffer.h"
 

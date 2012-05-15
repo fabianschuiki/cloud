@@ -74,6 +74,23 @@ handle_request (struct cld_client *client, struct cld_object *object)
 	return -1;
 }
 
+static int
+make_account (struct cld_client *client, struct cld_object *object)
+{
+	const char *type = cld_object_get_string(object, "type");
+	if (type == NULL) {
+		send_error(client, "make.account: specify what kind of account you want in the 'type' field");
+		return -1;
+	}
+	
+	struct cld_object *account = cld_object_create("account");
+	cld_object_set(account, "type", cld_object_create_string(type));
+	cld_object_set(account, "uuid", cld_object_create_string("abcdef123456"));
+	cld_connection_write(client->connection, account);
+	cld_object_destroy(account);
+	return 0;
+}
+
 /** Called by the client's connection whenever a message is received. */
 static int
 connection_received (struct cld_object *object, void *data)
@@ -85,7 +102,14 @@ connection_received (struct cld_object *object, void *data)
 	int result = 0;
 	if (cld_object_is(object, "request")) {
 		if (handle_request(client, object) < 0) {
-			send_error(client, "unable to handle request");
+			fprintf(stderr, "unable to handle request\n");
+			cld_object_print(object);
+			result = -1;
+		}
+	}
+	if (cld_object_is(object, "make.account")) {
+		if (make_account(client, object) < 0) {
+			fprintf(stderr, "unable to make account\n");
 			cld_object_print(object);
 			result = -1;
 		}

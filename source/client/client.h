@@ -10,6 +10,7 @@
 
 struct cld_client {
 	struct cld_daemon *daemon;
+	struct cld_list *accounts;
 };
 
 
