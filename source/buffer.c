@@ -2,6 +2,7 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,6 +66,8 @@ cld_buffer_slice (struct cld_buffer *buffer, size_t offset)
 	void *data = buffer->data;
 	buffer->data = malloc(buffer->size);
 	buffer->length -= offset;
-	memcpy(buffer->data, data + offset, buffer->length);
+	assert(buffer->length >= 0 && "sliced beyond the end of the buffer");
+	if (buffer->length > 0)
+		memcpy(buffer->data, data + offset, buffer->length);
 	return data;
 }

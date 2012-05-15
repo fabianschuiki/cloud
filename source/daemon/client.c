@@ -87,7 +87,7 @@ make_account (struct cld_client *client, struct cld_object *object)
 	}
 	
 	cld_connection_write(client->connection, account);
-	cld_object_destroy(account);
+	//cld_object_destroy(account);
 	return 0;
 }
 
@@ -114,6 +114,9 @@ connection_received (struct cld_object *object, void *data)
 			result = -1;
 		}
 	}
+	if (cld_object_is(object, "account")) {
+		result = cld_daemon_update_account(client->daemon, cld_object_copy(object));
+	}
 	
 	cld_object_destroy(object);
 	return result;
@@ -122,7 +125,7 @@ connection_received (struct cld_object *object, void *data)
 static void
 connection_disconnected (void *data)
 {
-	struct cld_client *client= data;
+	struct cld_client *client = data;
 	cld_daemon_disconnect_client(client->daemon, client);
 }
 

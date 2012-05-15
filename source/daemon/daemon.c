@@ -67,7 +67,7 @@ cld_daemon_create ()
 	daemon->services = cld_list_create();
 	daemon->connections = cld_list_create();
 	
-	daemon->accounts = cld_object_create_array();
+	daemon->accounts = cld_object_create("accounts");
 	cld_daemon_accounts_load(daemon);
 	
 	return daemon;
@@ -122,13 +122,31 @@ cld_daemon_add_account (struct cld_daemon *daemon, const char *type)
 	if (account == NULL)
 		return NULL;
 	
+	//TODO: wrap this in its own function.
+	FILE * uuidgen = popen("uuidgen", "r");
+	char output[37];
+	memset(output, 0, 37);
+	if (fread(output, 36, 1, uuidgen) != 1) {
+		fprintf(stderr, "%s: unable to generate uuid\n", __FUNCTION__);
+		return NULL;
+	}
+	pclose(uuidgen);
+	
 	cld_object_set(account, "type", cld_object_create_string(type));
-	cld_object_set(account, "uuid", cld_object_create_string("1234"));
+	cld_object_set(account, "uuid", cld_object_create_string(output));
 	
 	cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
 	cld_daemon_accounts_save(daemon);
 	
 	return account;
+}
+
+int
+cld_daemon_update_account (struct cld_daemon *daemon, struct cld_object *account)
+{
+	cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
+	cld_daemon_accounts_save(daemon);
+	return 0;
 }
 
 

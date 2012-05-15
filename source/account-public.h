@@ -3,6 +3,9 @@
  */
 
 struct cld_account;
+struct cld_object;
+
+struct cld_object *cld_account_get_object (struct cld_account *account);
 
 void cld_account_set (struct cld_account *account, const char *field, const char *value);
 const char *cld_account_get (struct cld_account *account, const char *field);

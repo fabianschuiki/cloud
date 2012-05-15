@@ -94,6 +94,11 @@ account_commit (struct cld_account *account, void *data)
 	struct cld_client *client = data;
 	
 	printf("committing account %p\n", account);
+	
+	struct cld_object *object = cld_account_get_object(account);
+	cld_object_print(object);
+	if (cld_connection_write_blocking(client->connection, object) < 0)
+		return;
 }
 
 struct cld_account *cld_client_add_account (struct cld_client *client, const char *type)
@@ -157,8 +162,8 @@ fetch_accounts (struct cld_client *client)
 	printf("received %i accounts\n", num_accounts);
 	
 	for (i = 0; i < num_accounts; i++) {
-		struct cld_object *account = cld_object_array_get(response, i);
-		cld_list_add(client->accounts, cld_object_copy(account));
+		struct cld_account *account = cld_account_create(cld_object_copy(cld_object_array_get(response, i)), account_commit, client);
+		cld_list_add(client->accounts, account);
 	}
 	cld_object_destroy(response);
 }
@@ -169,6 +174,11 @@ cld_client_get_account (struct cld_client *client, const char *id)
 	if (client->accounts == NULL)
 		fetch_accounts(client);
 	
+	struct cld_list_element *element = cld_list_begin(client->accounts);
+	for (; element; element = cld_list_next(element)) {
+		if (strcmp(cld_account_get_id(element->object), id) == 0)
+			return element->object;
+	}
 	
 	return NULL;
 }

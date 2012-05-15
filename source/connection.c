@@ -98,7 +98,7 @@ communicate (struct cld_connection *connection, int mask)
 			close(connection->fd);
 			connection->fd = 0;
 			connection->disconnected(connection->data);
-			return 0;
+			return -1;
 		}
 		
 		cld_buffer_put(connection->inbuf, buffer, num);
