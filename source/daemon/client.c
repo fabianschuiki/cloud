@@ -8,7 +8,7 @@
 #include <stdarg.h>
 
 #include "client.h"
-#include "../daemon.h"
+#include "daemon.h"
 #include "../connection.h"
 #include "../object.h"
 
@@ -83,9 +83,16 @@ make_account (struct cld_client *client, struct cld_object *object)
 		return -1;
 	}
 	
-	struct cld_object *account = cld_object_create("account");
+	/*struct cld_object *account = cld_object_create("account");
 	cld_object_set(account, "type", cld_object_create_string(type));
-	cld_object_set(account, "uuid", cld_object_create_string("abcdef123456"));
+	cld_object_set(account, "uuid", cld_object_create_string("abcdef123456"));*/
+	
+	struct cld_object *account = cld_daemon_add_account(client->daemon, type);
+	if (account == NULL) {
+		send_error(client, "make.account: unable to create account");
+		return -1;
+	}
+	
 	cld_connection_write(client->connection, account);
 	cld_object_destroy(account);
 	return 0;

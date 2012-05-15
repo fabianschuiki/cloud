@@ -11,6 +11,7 @@ struct cld_list;
 
 struct cld_client;
 struct cld_service;
+struct cld_object;
 
 struct cld_daemon {
 	struct cld_socket *client_socket;
@@ -19,10 +20,17 @@ struct cld_daemon {
 	struct cld_list *clients;
 	struct cld_list *services;
 	struct cld_list *connections;
+	
+	struct cld_object *accounts;
 };
 
 void cld_daemon_disconnect_client(struct cld_daemon *daemon, struct cld_client *client);
 void cld_daemon_disconnect_service(struct cld_daemon *daemon, struct cld_service *service);
+
+struct cld_object *cld_daemon_add_account (struct cld_daemon *daemon, const char *type);
+
+void cld_daemon_accounts_save (struct cld_daemon *daemon);
+void cld_daemon_accounts_load (struct cld_daemon *daemon);
 
 
 #endif

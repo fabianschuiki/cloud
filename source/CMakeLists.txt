@@ -26,7 +26,7 @@ include_directories (${PROJECT_BINARY_DIR})
 
 
 add_executable (cloudd
-	daemon.c
+	daemon/daemon.c
 	socket.c
 	daemon/client.c
 	daemon/service.c

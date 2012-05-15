@@ -15,15 +15,17 @@
 #include <sys/select.h>
 #include <signal.h>
 
-#include "util.h"
+#include "../util.h"
 #include "daemon.h"
-#include "socket.h"
-#include "daemon/client.h"
-#include "daemon/service.h"
-#include "run-loop.h"
-#include "fd-public.h"
-#include "list.h"
-#include "connection.h"
+#include "../socket.h"
+#include "client.h"
+#include "service.h"
+#include "../run-loop.h"
+#include "../fd-public.h"
+#include "../list.h"
+#include "../connection.h"
+#include "../object.h"
+#include "../buffer.h"
 
 
 struct cld_daemon *
@@ -65,6 +67,9 @@ cld_daemon_create ()
 	daemon->services = cld_list_create();
 	daemon->connections = cld_list_create();
 	
+	daemon->accounts = cld_object_create_array();
+	cld_daemon_accounts_load(daemon);
+	
 	return daemon;
 }
 
@@ -88,6 +93,7 @@ cld_daemon_destroy (struct cld_daemon *daemon)
 	}
 	cld_list_destroy(daemon->services);
 	
+	cld_object_destroy(daemon->accounts);
 	free(daemon);
 }
 
@@ -106,6 +112,62 @@ cld_daemon_disconnect_service (struct cld_daemon *daemon, struct cld_service *se
 	cld_list_remove(daemon->services, service);
 	cld_list_remove(daemon->connections, service->connection);
 	cld_service_destroy(service);
+}
+
+
+struct cld_object *
+cld_daemon_add_account (struct cld_daemon *daemon, const char *type)
+{
+	struct cld_object *account = cld_object_create("account");
+	if (account == NULL)
+		return NULL;
+	
+	cld_object_set(account, "type", cld_object_create_string(type));
+	cld_object_set(account, "uuid", cld_object_create_string("1234"));
+	
+	cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
+	cld_daemon_accounts_save(daemon);
+	
+	return account;
+}
+
+
+void
+cld_daemon_accounts_save (struct cld_daemon *daemon)
+{
+	struct cld_buffer *buffer = cld_object_serialize(daemon->accounts);
+	
+	FILE *f = fopen("accounts", "w");
+	fwrite(buffer->data, buffer->length, 1, f);
+	fclose(f);
+	
+	cld_buffer_destroy(buffer);
+}
+
+void
+cld_daemon_accounts_load (struct cld_daemon *daemon)
+{
+	FILE *f = fopen("accounts", "r");
+	if (f == NULL)
+		return;
+	
+	struct cld_buffer *buffer = cld_buffer_create();
+	while (!feof(f)) {
+		char data[4096];
+		int len = fread(data, 1, 4096, f);
+		cld_buffer_put(buffer, data, len);
+	}
+	
+	fclose(f);
+	
+	struct cld_object *accounts = cld_object_unserialize(buffer->data, buffer->length);
+	if (accounts == NULL) {
+		fprintf(stderr, "unable to read accounts\n");
+		return;
+	}
+	
+	cld_object_destroy(daemon->accounts);
+	daemon->accounts = accounts;
 }
 
 

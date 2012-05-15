@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "service.h"
-#include "../daemon.h"
+#include "daemon.h"
 #include "../event-loop.h"
 #include "../connection.h"
 #include "../object.h"
