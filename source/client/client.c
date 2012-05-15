@@ -94,6 +94,11 @@ struct cld_account *cld_client_add_account (struct cld_client *client, const cha
 	return account;
 }
 
+struct cld_account *
+cld_client_get_account (struct cld_client *client, const char *id)
+{
+	return NULL;
+}
 
 
 void

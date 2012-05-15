@@ -49,22 +49,35 @@ cld_account_commit (struct cld_account *account)
 }
 
 
+void
+cld_account_set (struct cld_account *account, const char *field, const char *value)
+{
+	cld_object_set(account->object, field, cld_object_create_string(value));
+}
+
+const char *
+cld_account_get (struct cld_account *account, const char *field)
+{
+	return cld_object_get_string(account->object, field);
+}
+
+
 const char *
 cld_account_get_id (struct cld_account *account)
 {
-	return cld_object_get_string(account->object, "uuid");
+	return cld_account_get(account, "uuid");
 }
 
 
 void
 cld_account_set_identity (struct cld_account *account, const char *ident)
 {
-	cld_object_set(account->object, "identity", cld_object_create_string(ident));
+	cld_account_set(account, "identity", ident);
 	cld_account_commit(account);
 }
 
 const char *
 cld_account_get_identity (struct cld_account *account)
 {
-	return cld_object_get_string(account->object, "identity");
+	return cld_account_get(account, "identity");
 }

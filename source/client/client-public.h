@@ -10,6 +10,7 @@ struct cld_client *cld_client_create();
 void cld_client_destroy(struct cld_client *client);
 
 struct cld_account *cld_client_add_account(struct cld_client *client, const char *type);
+struct cld_account *cld_client_get_account(struct cld_client *client, const char *id);
 
 
 //deprecated

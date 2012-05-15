@@ -26,6 +26,7 @@ print_help ()
 		"The following commands are supported:\n"
 		"   add     Add a new account of the given type\n"
 		"   list    Show a list of cloud accounts\n"
+		"   set     Sets the value of an account field\n"
 	);
 }
 
@@ -75,6 +76,36 @@ cloud_cmd_account_list (int argc, char *argv[])
 }
 
 int
+cloud_cmd_account_set (int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "account ID and at least one field=value pair required\n");
+		return -1;
+	}
+	const char *uuid = argv[0];
+	
+	struct cld_account *account = cld_client_get_account(cloud, uuid);
+	if (account == NULL) {
+		fprintf(stderr, "unknown account %s\n", uuid);
+		return -1;
+	}
+	
+	int i;
+	for (i = 1; i < argc; i++) {
+		char *field = argv[i];
+		char *value = strchr(field, '=');
+		value[0] = 0;
+		value++;
+		if (cld_account_set(account, field, value) < 0) {
+			fprintf(stderr, "unable to set %s = %s\n", field, value);
+			return -1;
+		}
+	}
+	
+	return 0;
+}
+
+int
 cloud_cmd_account (int argc, char *argv[])
 {
 	if (argc < 1) {
@@ -99,6 +130,9 @@ cloud_cmd_account (int argc, char *argv[])
 	}
 	if (strcmp(command, "list") == 0) {
 		return cloud_cmd_account_list(argc, argv);
+	}
+	if (strcmp(command, "set") == 0) {
+		return cloud_cmd_account_set(argc, argv);
 	}
 	
 	return 0;
