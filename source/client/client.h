@@ -9,7 +9,9 @@
 
 
 struct cld_client {
-	struct cld_daemon *daemon;
+	struct cld_socket *socket;
+	struct cld_connection *connection;
+	
 	struct cld_list *accounts;
 };
 

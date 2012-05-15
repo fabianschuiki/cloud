@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "client.h"
 #include "../socket.h"
@@ -12,6 +13,22 @@
 #include "../object.h"
 #include "../list.h"
 #include "../account.h"
+
+
+static int
+connection_received (struct cld_object *object, void *data)
+{
+	struct cld_client *client = data;
+	printf("daemon sent ", client);
+	cld_object_print(object);
+	return 0;
+}
+
+static void
+connection_disconnected (void *data)
+{
+	fprintf(stderr, "*** daemon disconnect not handled\n");
+}
 
 
 struct cld_client *
@@ -23,14 +40,26 @@ cld_client_create ()
 	if (client == NULL)
 		return NULL;
 	
-	client->daemon = cld_daemon_connect(client);
-	if (client->daemon == NULL) {
-		fprintf(stderr, "%s: unable to connect to cloud daemon\n", __FUNCTION__);
+	memset(client, 0, sizeof *client);
+	
+	client->socket = cld_socket_create(CLD_SOCKET_CLIENT);
+	if (client->socket == NULL) {
 		free(client);
 		return NULL;
 	}
 	
-	client->accounts = cld_list_create();
+	if (cld_socket_connect(client->socket) < 0) {
+		cld_socket_destroy(client->socket);
+		free(client);
+		return NULL;
+	}
+	
+	client->connection = cld_connection_create(cld_socket_get_fd(client->socket), connection_received, connection_disconnected, client);
+	if (client->connection == NULL) {
+		cld_socket_destroy(client->socket);
+		free(client);
+		return NULL;
+	}
 	
 	return client;
 }
@@ -38,8 +67,12 @@ cld_client_create ()
 void
 cld_client_destroy (struct cld_client *client)
 {
-	cld_daemon_disconnect(client->daemon);
-	cld_list_destroy(client->accounts);
+	cld_connection_destroy(client->connection);
+	cld_socket_destroy(client->socket);
+	
+	if (client->accounts)
+		cld_list_destroy(client->accounts);
+	
 	free(client);
 }
 
@@ -73,13 +106,13 @@ struct cld_account *cld_client_add_account (struct cld_client *client, const cha
 	
 	cld_object_set(object, "type", cld_object_create_string(type));
 	
-	if (cld_connection_write_blocking(client->daemon->connection, object) < 0) {
+	if (cld_connection_write_blocking(client->connection, object) < 0) {
 		cld_object_destroy(object);
 		return NULL;
 	}
 	cld_object_destroy(object);
 	
-	struct cld_object *response = cld_connection_read_blocking(client->daemon->connection);
+	struct cld_object *response = cld_connection_read_blocking(client->connection);
 	if (response == NULL || catch_error(__FUNCTION__, response) < 0)
 		return NULL;
 	
@@ -94,9 +127,49 @@ struct cld_account *cld_client_add_account (struct cld_client *client, const cha
 	return account;
 }
 
+static void
+fetch_accounts (struct cld_client *client)
+{
+	printf("fetching accounts\n");
+	
+	struct cld_object *req = cld_object_create("request");
+	if (req == NULL)
+		return;
+	
+	cld_object_set(req, "object", cld_object_create_string("accounts"));
+	
+	if (cld_connection_write_blocking(client->connection, req) < 0)
+		return;
+	
+	struct cld_object *response = cld_connection_read_blocking(client->connection);
+	if (response == NULL)
+		return;
+	if (catch_error(__FUNCTION__, response) < 0)
+		return;
+	
+	client->accounts = cld_list_create();
+	if (client->accounts == NULL)
+		return;
+	
+	int i;
+	int num_accounts = cld_object_array_count(response);
+	
+	printf("received %i accounts\n", num_accounts);
+	
+	for (i = 0; i < num_accounts; i++) {
+		struct cld_object *account = cld_object_array_get(response, i);
+		cld_list_add(client->accounts, cld_object_copy(account));
+	}
+	cld_object_destroy(response);
+}
+
 struct cld_account *
 cld_client_get_account (struct cld_client *client, const char *id)
 {
+	if (client->accounts == NULL)
+		fetch_accounts(client);
+	
+	
 	return NULL;
 }
 
@@ -104,7 +177,7 @@ cld_client_get_account (struct cld_client *client, const char *id)
 void
 cld_client_account_set (struct cld_client *client, struct cld_object *account)
 {
-	cld_connection_write_blocking(client->daemon->connection, account);
+	cld_connection_write_blocking(client->connection, account);
 }
 
 struct cld_object *
@@ -116,10 +189,10 @@ cld_client_account_list (struct cld_client *client)
 	
 	cld_object_set(req, "object", cld_object_create_string("accounts"));
 	
-	if (cld_connection_write_blocking(client->daemon->connection, req) < 0)
+	if (cld_connection_write_blocking(client->connection, req) < 0)
 		return NULL;
 	
-	struct cld_object *response = cld_connection_read_blocking(client->daemon->connection);
+	struct cld_object *response = cld_connection_read_blocking(client->connection);
 	if (response == NULL)
 		return NULL;
 	if (catch_error(__FUNCTION__, response) < 0)

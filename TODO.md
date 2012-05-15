@@ -1,3 +1,4 @@
 - read and write account information.
 - provide an interface to interact with accounts via cld_account_* calls.
 - move cli into source directory
+- create a `cld_client_request` function that performs an object fetch.
