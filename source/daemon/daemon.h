@@ -28,6 +28,7 @@ void cld_daemon_disconnect_client(struct cld_daemon *daemon, struct cld_client *
 void cld_daemon_disconnect_service(struct cld_daemon *daemon, struct cld_service *service);
 
 struct cld_object *cld_daemon_add_account (struct cld_daemon *daemon, const char *type);
+int cld_daemon_update_account (struct cld_daemon *daemon, struct cld_object *account);
 
 void cld_daemon_accounts_save (struct cld_daemon *daemon);
 void cld_daemon_accounts_load (struct cld_daemon *daemon);

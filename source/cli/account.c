@@ -68,7 +68,7 @@ cloud_cmd_account_list (int argc, char *argv[])
 	int i;
 	for (i = 0; i < num; i++) {
 		struct cld_object *account = cld_object_array_get(accounts, i);
-		printf("%s  %s  %s\n", cld_object_get_string(account, "uuid"), cld_object_get_string(account, "type"), cld_object_get_string(account, "username"));
+		printf("%s  %s  %s\n", cld_object_get_string(account, "uuid"), cld_object_get_string(account, "type"), cld_object_get_string(account, "identity"));
 	}
 	
 	cld_object_destroy(accounts);
@@ -96,10 +96,7 @@ cloud_cmd_account_set (int argc, char *argv[])
 		char *value = strchr(field, '=');
 		value[0] = 0;
 		value++;
-		if (cld_account_set(account, field, value) < 0) {
-			fprintf(stderr, "unable to set %s = %s\n", field, value);
-			return -1;
-		}
+		cld_account_set(account, field, value);
 	}
 	
 	return 0;

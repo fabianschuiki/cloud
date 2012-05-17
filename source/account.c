@@ -42,6 +42,13 @@ cld_account_destroy (struct cld_account *account)
 }
 
 
+struct cld_object *
+cld_account_get_object (struct cld_account *account)
+{
+	return account->object;
+}
+
+
 void
 cld_account_commit (struct cld_account *account)
 {
@@ -53,6 +60,7 @@ void
 cld_account_set (struct cld_account *account, const char *field, const char *value)
 {
 	cld_object_set(account->object, field, cld_object_create_string(value));
+	cld_account_commit(account);
 }
 
 const char *
@@ -73,7 +81,6 @@ void
 cld_account_set_identity (struct cld_account *account, const char *ident)
 {
 	cld_account_set(account, "identity", ident);
-	cld_account_commit(account);
 }
 
 const char *
