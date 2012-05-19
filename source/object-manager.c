@@ -2,6 +2,7 @@
  * Copyright © 2012 Fabian Schuiki
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

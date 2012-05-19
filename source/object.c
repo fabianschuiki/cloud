@@ -9,8 +9,125 @@
 
 #include "object.h"
 #include "buffer.h"
+#include "object-manager.h"
 
 
+/** Creates a new object of the given kind and registers it with the given
+ * object manager. */
+struct cld_object *
+cld_object_create (struct cld_object_manager *manager, unsigned char kind)
+{
+	struct cld_object *object;
+	
+	object = malloc(sizeof *object);
+	if (object == NULL)
+		return NULL;
+	
+	memset(manager, 0, sizeof *manager);
+	object->manager = manager;
+	object->kind = kind;
+	
+	cld_object_manager_add(manager, object);
+	return object;
+}
+
+/** Destroys the given object and removes it from its object manager. */
+void
+cld_object_destroy (struct cld_object *object)
+{
+	//TODO: iterate through the fields and destroy each.
+	
+	cld_object_manager_remove(object->manager, object->id);
+	free(object);
+}
+
+
+
+struct cld_object *
+cld_object_create_object (struct cld_object_manager *manager, const char *type)
+{
+	struct cld_object *object = cld_object_create(manager, CLD_TYPE_OBJECT);
+	if (object == NULL)
+		return NULL;
+	
+	object->kind = strdup(type);
+	return object;
+}
+
+struct cld_object *
+cld_object_create_string (struct cld_object_manager *manager, const char *string)
+{
+	struct cld_object *object = cld_object_create(manager, CLD_TYPE_STRING);
+	if (object == NULL)
+		return NULL;
+	
+	object->string = strdup(string);
+	return object;
+}
+
+struct cld_object *
+cld_object_create_array (struct cld_object_manager *manager)
+{
+	return cld_object_create(manager, CLD_TYPE_ARRAY);
+}
+
+
+
+/** Increases the object's reference count.
+ * 
+ * Call this function whenever you store a reference to an object. This will
+ * prevent the object from being freed. Additionally, the object manager of
+ * client and service objects use the reference count to determine when you're
+ * no longer interested in an object, in order to stop tracking it. */
+void
+cld_object_ref (struct cld_object *object)
+{
+	object->refcount++;
+}
+
+/** Reduces the object's reference count. If the count drops to 0, the object
+ * is destroyed immediately.
+ * 
+ * Call this function whenever you no longer need and object. Make sure you
+ * don't use the object afterwards, as it might already be destroyed. */
+void
+cld_object_unref (struct cld_object *object)
+{
+	object->refcount--;
+	if (object->refcount <= 0)
+		cld_object_destroy(object);
+}
+
+
+
+/** Returns whether the object is of the given object type. */
+int
+cld_object_is_object (struct cld_object *object, const char *type)
+{
+	if (object->kind != CLD_TYPE_OBJECT)
+		return 0;
+	if (type == strcmp(object->type, type) != 0)
+		return 0;
+	return 1;
+}
+
+/** Returns whether the object is a string. */
+int
+cld_object_is_string (struct cld_object *object)
+{
+	return object->kind == CLD_TYPE_STRING;
+}
+
+/** Returns whether the object is an array. */
+int
+cld_object_is_array (struct cld_object *object)
+{
+	return object->kind == CLD_TYPE_ARRAY;
+}
+
+
+
+//UNREVIEWED DEPRECATED STUFF
 struct cld_field {
 	struct cld_field *next;
 	struct cld_field *prev;

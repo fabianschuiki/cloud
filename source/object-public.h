@@ -3,17 +3,23 @@
  */
 
 struct cld_object;
+struct cld_object_manager;
 
-struct cld_object *cld_object_create(const char *type);
-struct cld_object *cld_object_create_string(const char *string);
-struct cld_object *cld_object_create_array();
-struct cld_object *cld_object_copy(struct cld_object *object);
-void cld_object_destroy(struct cld_object *object);
 
-int cld_object_is (struct cld_object *object, const char *type);
+struct cld_object *cld_object_create_object (struct cld_object_manager *manager, const char *type);
+struct cld_object *cld_object_create_string (struct cld_object_manager *manager, const char *string);
+struct cld_object *cld_object_create_array (struct cld_object_manager *manager);
+void cld_object_destroy (struct cld_object *object);
+
+void cld_object_ref (struct cld_object *object);
+void cld_object_unref (struct cld_object *object);
+
+int cld_object_is_object (struct cld_object *object, const char *type);
 int cld_object_is_string (struct cld_object *object);
 int cld_object_is_array (struct cld_object *object);
 
+
+//UNREVIEWED DEPRECATED STUFF
 void cld_object_set(struct cld_object *object, const char *name, struct cld_object *value);
 struct cld_object *cld_object_get(struct cld_object *object, const char *name);
 const char *cld_object_get_string(struct cld_object *object, const char *name);
