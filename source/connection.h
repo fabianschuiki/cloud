@@ -8,6 +8,22 @@
 #include <stdint.h>
 
 
+//TODO: New message types. Implement this.
+enum {
+	CLD_MSG_REQUEST_ID_RANGE,
+	CLD_MSG_ID_RANGE,
+	
+	CLD_MSG_REQUEST_OBJECT,
+	CLD_MSG_OBJECT,
+	
+	CLD_MSG_ADVERTISE,
+	CLD_MSG_DESTROYED,
+	
+	CLD_MSG_COLLECTION_ADD,
+	CLD_MSG_COLLECTION_REMOVE
+};
+
+
 struct cld_object;
 struct cld_buffer;
 typedef int (*cld_connection_received_func_t) (struct cld_object *object, void *data);
