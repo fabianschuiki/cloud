@@ -80,6 +80,9 @@ cld_daemon_create ()
 void
 cld_daemon_destroy (struct cld_daemon *daemon)
 {
+	cld_object_unref(daemon->object);
+	cld_object_manager_destroy(daemon->manager);
+	
 	cld_socket_destroy(daemon->client_socket);
 	cld_socket_destroy(daemon->service_socket);
 	
@@ -96,9 +99,6 @@ cld_daemon_destroy (struct cld_daemon *daemon)
 		cld_client_destroy(service->object);
 	}
 	cld_list_destroy(daemon->services);
-	
-	cld_object_unref(daemon->object);
-	cld_object_manager_destroy(daemon->manager);
 	
 	free(daemon);
 }
