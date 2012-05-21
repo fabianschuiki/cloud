@@ -26,6 +26,7 @@ enum {
 //TODO: new message container. Implement this.
 struct cld_message {
 	unsigned char op;
+	struct cld_connection *connection;
 	union {
 		struct {
 			int id;
@@ -42,7 +43,7 @@ struct cld_message {
 
 struct cld_object;
 struct cld_buffer;
-typedef int (*cld_connection_received_func_t) (struct cld_object *object, void *data);
+typedef int (*cld_connection_received_func_t) (struct cld_message *message, void *data);
 typedef void (*cld_connection_disconnected_func_t) (void *data);
 
 struct cld_connection {
@@ -60,10 +61,12 @@ struct cld_connection *cld_connection_create (int fd, cld_connection_received_fu
 void cld_connection_destroy (struct cld_connection *connection);
 
 int cld_connection_communicate (struct cld_connection *connection, int mask);
-int cld_connection_write(struct cld_connection *connection, struct cld_object *object);
+int cld_connection_parse (struct cld_connection *connection);
 
-int cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object);
-struct cld_object *cld_connection_read_blocking (struct cld_connection *connection);
+int cld_connection_write (struct cld_connection *connection, struct cld_message *message);
+
+//int cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object);
+//struct cld_object *cld_connection_read_blocking (struct cld_connection *connection);
 
 
 #endif

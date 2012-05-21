@@ -144,6 +144,9 @@ struct cld_object_manager {
 	
 	struct cld_object_pool *objects;
 	struct cld_object_pool *local;
+	
+	cld_object_manager_send_func_t send;
+	void *send_data;
 };
 
 
@@ -197,14 +200,25 @@ cld_object_manager_add (struct cld_object_manager *manager, struct cld_object *o
 	cld_object_pool_add(manager->objects, object);
 	printf("added %x\n", object->id);
 	
-	//TODO: advertize new object
+	//Advertize the object.
+	struct cld_message msg;
+	msg.op = CLD_MSG_ADVERTISE;
+	msg.connection = NULL;
+	msg.obj.id = object->id;
+	msg.obj.type = object->type;
+	cld_object_manager_send(manager, &msg);
 }
 
 /** Removes an object created locally from the object manager. */
 void
 cld_object_manager_remove (struct cld_object_manager *manager, int id)
 {
-	//TODO: advertize object being deleted
+	//Publish object deletion.
+	struct cld_message msg;
+	msg.op = CLD_MSG_DESTROYED;
+	msg.connection = NULL;
+	msg.obj.id = id;
+	cld_object_manager_send(manager, &msg);
 	
 	cld_object_pool_remove(manager->local, id);
 	cld_object_pool_remove(manager->objects, id);
@@ -233,7 +247,13 @@ cld_object_manager_handle (struct cld_object_manager *manager, struct cld_messag
 			if (object == NULL) {
 				//TODO: return error that the object wasn't found
 			} else {
-				//TODO: return the object
+				//TODO: return the object.
+				struct cld_message resp;
+				resp.op = CLD_MSG_OBJECT;
+				resp.connection = msg->connection;
+				resp.obj.id = object->id;
+				resp.obj.object = object;
+				cld_object_manager_send(manager, &resp);
 			}
 		} break;
 		
@@ -243,4 +263,18 @@ cld_object_manager_handle (struct cld_object_manager *manager, struct cld_messag
 			printf("received new ID range [%x,%x]\n", manager->current_id, manager->max_id);
 		} break;
 	}
+	return 0;
+}
+
+void
+cld_object_manager_send_func (struct cld_object_manager *manager, cld_object_manager_send_func_t func, void *data)
+{
+	manager->send = func;
+	manager->send_data = data;
+}
+
+void
+cld_object_manager_send (struct cld_object_manager *manager, struct cld_message *message)
+{
+	manager->send(message, manager->send_data);
 }

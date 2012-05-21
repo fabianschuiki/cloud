@@ -8,10 +8,14 @@
 
 struct cld_socket;
 struct cld_list;
+struct cld_message;
 
 struct cld_client;
 struct cld_service;
+
 struct cld_object;
+struct cld_object_manager;
+
 
 struct cld_daemon {
 	struct cld_socket *client_socket;
@@ -21,7 +25,8 @@ struct cld_daemon {
 	struct cld_list *services;
 	struct cld_list *connections;
 	
-	struct cld_object *accounts;
+	struct cld_object_manager *manager;
+	struct cld_object *object;
 };
 
 void cld_daemon_disconnect_client(struct cld_daemon *daemon, struct cld_client *client);
@@ -32,6 +37,8 @@ int cld_daemon_update_account (struct cld_daemon *daemon, struct cld_object *acc
 
 void cld_daemon_accounts_save (struct cld_daemon *daemon);
 void cld_daemon_accounts_load (struct cld_daemon *daemon);
+
+int cld_daemon_send_message (struct cld_message *msg, void *data);
 
 
 #endif

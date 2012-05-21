@@ -10,9 +10,27 @@
 #include "util.h"
 #include "connection.h"
 #include "fd-public.h"
-//#include "event-loop.h"
 #include "buffer.h"
 #include "object.h"
+
+
+struct cld_buffer *
+cld_message_serialize (struct cld_message *message)
+{
+	struct cld_buffer *buffer = cld_buffer_create();
+	if (buffer == 0)
+		return NULL;
+	
+	cld_buffer_put(buffer, &message->op, sizeof message->op);
+	
+	return buffer;
+}
+
+struct cld_message *
+cld_message_unserialize (void *data, size_t length)
+{
+	return NULL;
+}
 
 
 struct cld_connection *
@@ -48,21 +66,21 @@ cld_connection_destroy (struct cld_connection *connection)
 	free(connection);
 }
 
-struct cld_object *
-parse_object (struct cld_connection *connection)
+struct cld_message *
+parse_message (struct cld_connection *connection)
 {
-	/*if (connection->inbuf->length >= sizeof(int)) {
+	if (connection->inbuf->length >= sizeof(int)) {
 		int length = *(int *)connection->inbuf->data;
 		if (connection->inbuf->length < length)
 			return NULL;
 		
 		void *data = cld_buffer_slice(connection->inbuf, length);
-		struct cld_object *object = cld_object_unserialize(data, length);
+		struct cld_message *message = cld_message_unserialize(data, length);
 		free(data);
 		
-		if (object)
-			return object;
-	}*/
+		if (message)
+			return message;
+	}
 	
 	return NULL;
 }
@@ -112,7 +130,7 @@ cld_connection_communicate (struct cld_connection *connection, int dir)
 {
 	int retval = communicate(connection, dir);
 	if (retval == 0 && dir & CLD_FD_READ)
-		cld_connection_parse_objects(connection);
+		cld_connection_parse(connection);
 	return retval;
 }
 
@@ -121,13 +139,13 @@ cld_connection_communicate (struct cld_connection *connection, int dir)
  * 
  * @returns the number of objects parsed, or -1 upon failure */
 int
-cld_connection_parse_objects (struct cld_connection *connection)
+cld_connection_parse (struct cld_connection *connection)
 {
-	struct cld_object *object;
+	struct cld_message *message;
 	int num = 0;
-	while (object = parse_object(connection)) {
+	while (message = parse_message(connection)) {
 		num++;
-		connection->received(object, connection->data);
+		connection->received(message, connection->data);
 	}
 	return num;
 }
@@ -136,47 +154,14 @@ cld_connection_parse_objects (struct cld_connection *connection)
 /** Serializes the given object and queues it up for delivery on the given
  * connection. The function returns immediately. */
 int
-cld_connection_write (struct cld_connection *connection, struct cld_object *object)
+cld_connection_write (struct cld_connection *connection, struct cld_message *message)
 {
-	/*struct cld_buffer *buffer = cld_object_serialize(object);
+	struct cld_buffer *buffer = cld_message_serialize(message);
 	if (buffer == NULL)
 		return -1;
 	
 	cld_buffer_put(connection->outbuf, buffer->data, buffer->length);
-	connection->mask |= CLD_FD_WRITE;*/
+	connection->mask |= CLD_FD_WRITE;
 	
 	return 0;
-}
-
-/** Serializes the given object and delivers it immediately on the given
- * connection. The function blocks until the object was delivered. */
-int
-cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object)
-{
-	/*struct cld_buffer *buffer = cld_object_serialize(object);
-	if (buffer == NULL)
-		return -1;
-	
-	if (write(connection->fd, buffer->data, buffer->length) < 0) {
-		error("write");
-		cld_buffer_destroy(buffer);
-		return -1;
-	}
-	
-	cld_buffer_destroy(buffer);*/
-	return 0;
-}
-
-/** Reads one object from the connection. The function blocks until an object
- * was read. */
-struct cld_object *
-cld_connection_read_blocking (struct cld_connection *connection)
-{
-	struct cld_object *object = parse_object(connection);
-	while (object == NULL) {
-		if (communicate(connection, CLD_FD_READ) < 0)
-			return NULL;
-		object = parse_object(connection);
-	}
-	return object;
 }

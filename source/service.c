@@ -16,12 +16,12 @@
 
 
 static int
-connection_received (struct cld_object *object, void *data)
+connection_received (struct cld_message *message, void *data)
 {
 	struct cld_service *service = data;
 	printf("daemon sent ", service);
-	cld_object_print(object);
-	cld_object_destroy(object);
+	//cld_object_print(object);
+	//cld_object_destroy(object);
 	return 1;
 }
 

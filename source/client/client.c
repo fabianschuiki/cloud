@@ -16,11 +16,11 @@
 
 
 static int
-connection_received (struct cld_object *object, void *data)
+connection_received (struct cld_message *message, void *data)
 {
 	struct cld_client *client = data;
 	printf("daemon sent ", client);
-	cld_object_print(object);
+	//cld_object_print(object);
 	return 0;
 }
 
@@ -97,8 +97,8 @@ account_commit (struct cld_account *account, void *data)
 	
 	struct cld_object *object = cld_account_get_object(account);
 	cld_object_print(object);
-	if (cld_connection_write_blocking(client->connection, object) < 0)
-		return;
+	/*if (cld_connection_write_blocking(client->connection, object) < 0)
+		return;*/
 }
 
 struct cld_account *cld_client_add_account (struct cld_client *client, const char *type)
@@ -187,7 +187,7 @@ cld_client_get_account (struct cld_client *client, const char *id)
 void
 cld_client_account_set (struct cld_client *client, struct cld_object *account)
 {
-	cld_connection_write_blocking(client->connection, account);
+	//cld_connection_write_blocking(client->connection, account);
 }
 
 struct cld_object *

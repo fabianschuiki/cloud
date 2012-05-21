@@ -25,6 +25,7 @@
 #include "../list.h"
 #include "../connection.h"
 #include "../object.h"
+#include "../object-manager.h"
 #include "../buffer.h"
 
 
@@ -67,8 +68,11 @@ cld_daemon_create ()
 	daemon->services = cld_list_create();
 	daemon->connections = cld_list_create();
 	
-	//daemon->accounts = cld_object_create("accounts");
-	cld_daemon_accounts_load(daemon);
+	daemon->manager = cld_object_manager_create();
+	cld_object_manager_send_func(daemon->manager, cld_daemon_send_message, daemon);
+	
+	daemon->object = cld_object_create_object(daemon->manager, "daemon");
+	cld_object_ref(daemon->object);
 	
 	return daemon;
 }
@@ -93,7 +97,9 @@ cld_daemon_destroy (struct cld_daemon *daemon)
 	}
 	cld_list_destroy(daemon->services);
 	
-	cld_object_destroy(daemon->accounts);
+	cld_object_unref(daemon->object);
+	cld_object_manager_destroy(daemon->manager);
+	
 	free(daemon);
 }
 
@@ -112,6 +118,26 @@ cld_daemon_disconnect_service (struct cld_daemon *daemon, struct cld_service *se
 	cld_list_remove(daemon->services, service);
 	cld_list_remove(daemon->connections, service->connection);
 	cld_service_destroy(service);
+}
+
+
+/** Called by the object manager whenever it needs to send a message. */
+int
+cld_daemon_send_message (struct cld_message *msg, void *data)
+{
+	struct cld_daemon *daemon = data;
+	printf("sending message %x...\n", msg->op);
+	
+	if (msg->connection != NULL)
+		return cld_connection_write(msg->connection, msg);
+	
+	struct cld_list_element *element = cld_list_begin(daemon->connections);
+	for (; element; element = cld_list_next(element)) {
+		struct cld_connection *connection = element->object;
+		cld_connection_write(connection, msg);
+	}
+	
+	return 0;
 }
 
 

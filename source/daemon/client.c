@@ -89,7 +89,7 @@ make_account (struct cld_client *client, struct cld_object *object)
 
 /** Called by the client's connection whenever a message is received. */
 static int
-connection_received (struct cld_object *object, void *data)
+connection_received (struct cld_message *message, void *data)
 {
 	struct cld_client *client = data;
 	printf("client %p sent ", client);
