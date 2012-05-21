@@ -32,6 +32,7 @@ add_executable (cloudd
 	daemon/service.c
 	run-loop.c
 	object.c
+	object-manager.c
 	buffer.c
 	list.c
 	connection.c)
@@ -42,6 +43,7 @@ add_library (cloud
 	connection.c
 	run-loop.c
 	object.c
+	object-manager.c
 	buffer.c
 	account.c
 	list.c
@@ -53,6 +55,7 @@ add_library (cloud-service
 	run-loop.c
 	connection.c
 	object.c
+	object-manager.c
 	buffer.c)
 
 add_executable (cloud-cli

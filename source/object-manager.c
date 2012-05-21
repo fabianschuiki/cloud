@@ -65,7 +65,7 @@ cld_object_pool_extend (struct cld_object_pool *pool, int count)
 	int nc = pool->count + count;
 	int size = pool->size;
 	while (nc > size) size <<= 1;
-	if (size != pool.size)
+	if (size != pool->size)
 		cld_object_pool_resize(pool, size);
 }
 
@@ -105,7 +105,7 @@ static void
 cld_object_pool_add (struct cld_object_pool *pool, struct cld_object *object)
 {
 	int index = cld_object_pool_locate(pool, object->id);
-	cld_object_pool_extend(1);
+	cld_object_pool_extend(pool, 1);
 	
 	memcpy(&pool->entries[index + 1], &pool->entries[index], pool->count - index);
 	pool->entries[index].id = object->id;
@@ -218,17 +218,17 @@ int
 cld_object_manager_handle (struct cld_object_manager *manager, struct cld_message *msg)
 {
 	switch (msg->op) {
-		case CLD_EVENT_OBJECT_CREATED: {
+		case CLD_MSG_ADVERTISE: {
 			printf("remote %x created (a %s)\n", msg->obj.id, msg->obj.type);
 			//TODO: inform observers about the new object, potentially updating smart lists.
 		} break;
 		
-		case CLD_EVENT_OBJECT_DESTROYED: {
+		case CLD_MSG_DESTROYED: {
 			printf("remote %x destroyed\n", msg->obj.id);
 			//TODO: remove object from the pool, inform observers that the object was deleted.
 		} break;
 		
-		case CLD_REQUEST_OBJECT: {
+		case CLD_MSG_REQUEST_OBJECT: {
 			struct cld_object *object = cld_object_pool_get(manager->local, msg->obj.id);
 			if (object == NULL) {
 				//TODO: return error that the object wasn't found
@@ -237,7 +237,7 @@ cld_object_manager_handle (struct cld_object_manager *manager, struct cld_messag
 			}
 		} break;
 		
-		case CLD_EVENT_ID_RANGE: {
+		case CLD_MSG_ID_RANGE: {
 			manager->current_id = msg->id.min;
 			manager->max_id = msg->id.max;
 			printf("received new ID range [%x,%x]\n", manager->current_id, manager->max_id);

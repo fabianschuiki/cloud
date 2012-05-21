@@ -67,7 +67,7 @@ cld_daemon_create ()
 	daemon->services = cld_list_create();
 	daemon->connections = cld_list_create();
 	
-	daemon->accounts = cld_object_create("accounts");
+	//daemon->accounts = cld_object_create("accounts");
 	cld_daemon_accounts_load(daemon);
 	
 	return daemon;
@@ -118,7 +118,7 @@ cld_daemon_disconnect_service (struct cld_daemon *daemon, struct cld_service *se
 struct cld_object *
 cld_daemon_add_account (struct cld_daemon *daemon, const char *type)
 {
-	struct cld_object *account = cld_object_create("account");
+	/*struct cld_object *account = cld_object_create("account");
 	if (account == NULL)
 		return NULL;
 	
@@ -138,13 +138,13 @@ cld_daemon_add_account (struct cld_daemon *daemon, const char *type)
 	cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
 	cld_daemon_accounts_save(daemon);
 	
-	return account;
+	return account;*/
 }
 
 int
 cld_daemon_update_account (struct cld_daemon *daemon, struct cld_object *account)
 {
-	cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
+	//cld_object_set(daemon->accounts, cld_object_get_string(account, "uuid"), account);
 	cld_daemon_accounts_save(daemon);
 	return 0;
 }
@@ -153,19 +153,19 @@ cld_daemon_update_account (struct cld_daemon *daemon, struct cld_object *account
 void
 cld_daemon_accounts_save (struct cld_daemon *daemon)
 {
-	struct cld_buffer *buffer = cld_object_serialize(daemon->accounts);
+	/*struct cld_buffer *buffer = cld_object_serialize(daemon->accounts);
 	
 	FILE *f = fopen("accounts", "w");
 	fwrite(buffer->data, buffer->length, 1, f);
 	fclose(f);
 	
-	cld_buffer_destroy(buffer);
+	cld_buffer_destroy(buffer);*/
 }
 
 void
 cld_daemon_accounts_load (struct cld_daemon *daemon)
 {
-	FILE *f = fopen("accounts", "r");
+	/*FILE *f = fopen("accounts", "r");
 	if (f == NULL)
 		return;
 	
@@ -186,7 +186,7 @@ cld_daemon_accounts_load (struct cld_daemon *daemon)
 	
 	cld_object_destroy(daemon->accounts);
 	daemon->accounts = accounts;
-	cld_object_print(accounts);
+	cld_object_print(accounts);*/
 }
 
 

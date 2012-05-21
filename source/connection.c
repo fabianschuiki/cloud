@@ -51,7 +51,7 @@ cld_connection_destroy (struct cld_connection *connection)
 struct cld_object *
 parse_object (struct cld_connection *connection)
 {
-	if (connection->inbuf->length >= sizeof(int)) {
+	/*if (connection->inbuf->length >= sizeof(int)) {
 		int length = *(int *)connection->inbuf->data;
 		if (connection->inbuf->length < length)
 			return NULL;
@@ -62,7 +62,7 @@ parse_object (struct cld_connection *connection)
 		
 		if (object)
 			return object;
-	}
+	}*/
 	
 	return NULL;
 }
@@ -138,12 +138,12 @@ cld_connection_parse_objects (struct cld_connection *connection)
 int
 cld_connection_write (struct cld_connection *connection, struct cld_object *object)
 {
-	struct cld_buffer *buffer = cld_object_serialize(object);
+	/*struct cld_buffer *buffer = cld_object_serialize(object);
 	if (buffer == NULL)
 		return -1;
 	
 	cld_buffer_put(connection->outbuf, buffer->data, buffer->length);
-	connection->mask |= CLD_FD_WRITE;
+	connection->mask |= CLD_FD_WRITE;*/
 	
 	return 0;
 }
@@ -153,7 +153,7 @@ cld_connection_write (struct cld_connection *connection, struct cld_object *obje
 int
 cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object)
 {
-	struct cld_buffer *buffer = cld_object_serialize(object);
+	/*struct cld_buffer *buffer = cld_object_serialize(object);
 	if (buffer == NULL)
 		return -1;
 	
@@ -163,7 +163,7 @@ cld_connection_write_blocking (struct cld_connection *connection, struct cld_obj
 		return -1;
 	}
 	
-	cld_buffer_destroy(buffer);
+	cld_buffer_destroy(buffer);*/
 	return 0;
 }
 

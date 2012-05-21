@@ -59,14 +59,14 @@ cld_account_commit (struct cld_account *account)
 void
 cld_account_set (struct cld_account *account, const char *field, const char *value)
 {
-	cld_object_set(account->object, field, cld_object_create_string(value));
+	//cld_object_set(account->object, field, cld_object_create_string(value));
 	cld_account_commit(account);
 }
 
 const char *
 cld_account_get (struct cld_account *account, const char *field)
 {
-	return cld_object_get_string(account->object, field);
+	//return cld_object_get_string(account->object, field);
 }
 
 

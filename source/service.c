@@ -108,9 +108,9 @@ cld_service_set_name (struct cld_service *service, const char *name)
 void
 cld_service_send_descriptor (struct cld_service *service)
 {
-	struct cld_object *desc = cld_object_create("service");
+	/*struct cld_object *desc = cld_object_create("service");
 	
 	cld_object_set(desc, "name", cld_object_create_string(service->name));
 	
-	cld_connection_write(service->connection, desc);
+	cld_connection_write(service->connection, desc);*/
 }

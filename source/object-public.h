@@ -25,6 +25,8 @@ struct cld_object *cld_object_at (struct cld_object *object, int index);
 int cld_object_add (struct cld_object *object, struct cld_object *value);
 void cld_object_remove (struct cld_object *object, int index);
 void cld_object_remove_object (struct cld_object *object, struct cld_object *value);
+struct cld_object *cld_object_at (struct cld_object *object, int index);
+int cld_object_count (struct cld_object *object);
 
 int cld_object_find (struct cld_object *object, struct cld_object *value);
 

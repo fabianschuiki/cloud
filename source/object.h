@@ -37,7 +37,7 @@ struct cld_object {
 	};
 };
 
-struct cld_object *cld_object_create (struct cld_object_manager *manager);
+struct cld_object *cld_object_create (struct cld_object_manager *manager, unsigned char kind);
 
 unsigned char cld_object_get_kind (struct cld_object *object);
 unsigned int cld_object_get_id (struct cld_object *object);

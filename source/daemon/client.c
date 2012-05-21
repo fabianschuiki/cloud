@@ -24,7 +24,7 @@ send_error (struct cld_client *client, const char *msg, ...)
 	
 	printf("client %p produced error: %s\n", client, formatted);
 	
-	struct cld_object *error = cld_object_create("error");
+	/*struct cld_object *error = cld_object_create("error");
 	if (error == NULL) {
 		fprintf(stderr, "%s: unable to create error object for message '%s'\n", __FUNCTION__, formatted);
 		return;
@@ -32,7 +32,7 @@ send_error (struct cld_client *client, const char *msg, ...)
 	
 	cld_object_set(error, "message", cld_object_create_string(formatted));
 	cld_connection_write(client->connection, error);
-	cld_object_destroy(error);
+	cld_object_destroy(error);*/
 }
 
 /** Called by message_received whenever a 'request' object was received that
@@ -40,7 +40,7 @@ send_error (struct cld_client *client, const char *msg, ...)
 static int
 handle_request (struct cld_client *client, struct cld_object *object)
 {
-	const char *type = cld_object_get_string(object, "object");
+	/*const char *type = cld_object_get_string(object, "object");
 	if (type == NULL) {
 		send_error(client, "request: specify what you're requesting in the 'object' field");
 		return -1;
@@ -63,22 +63,18 @@ handle_request (struct cld_client *client, struct cld_object *object)
 		return 0;
 	}
 	
-	send_error(client, "request: requested object '%s' is unknown", type);
+	send_error(client, "request: requested object '%s' is unknown", type);*/
 	return -1;
 }
 
 static int
 make_account (struct cld_client *client, struct cld_object *object)
 {
-	const char *type = cld_object_get_string(object, "type");
+	/*const char *type = cld_object_get_string(object, "type");
 	if (type == NULL) {
 		send_error(client, "make.account: specify what kind of account you want in the 'type' field");
 		return -1;
 	}
-	
-	/*struct cld_object *account = cld_object_create("account");
-	cld_object_set(account, "type", cld_object_create_string(type));
-	cld_object_set(account, "uuid", cld_object_create_string("abcdef123456"));*/
 	
 	struct cld_object *account = cld_daemon_add_account(client->daemon, type);
 	if (account == NULL) {
@@ -87,7 +83,7 @@ make_account (struct cld_client *client, struct cld_object *object)
 	}
 	
 	cld_connection_write(client->connection, account);
-	//cld_object_destroy(account);
+	//cld_object_destroy(account);*/
 	return 0;
 }
 
@@ -97,7 +93,7 @@ connection_received (struct cld_object *object, void *data)
 {
 	struct cld_client *client = data;
 	printf("client %p sent ", client);
-	cld_object_print(object);
+	/*cld_object_print(object);
 	
 	int result = 0;
 	if (cld_object_is(object, "request")) {
@@ -115,11 +111,11 @@ connection_received (struct cld_object *object, void *data)
 		}
 	}
 	if (cld_object_is(object, "account")) {
-		result = cld_daemon_update_account(client->daemon, cld_object_copy(object));
+		//result = cld_daemon_update_account(client->daemon, cld_object_copy(object));
 	}
 	
 	cld_object_destroy(object);
-	return result;
+	return result;*/
 }
 
 static void

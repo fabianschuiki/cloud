@@ -80,10 +80,10 @@ cld_client_destroy (struct cld_client *client)
 static int
 catch_error (const char *func, struct cld_object *response)
 {
-	if (cld_object_is(response, "error")) {
+	/*if (cld_object_is(response, "error")) {
 		fprintf(stderr, "%s: daemon returned error: %s\n", func, cld_object_string(cld_object_get(response, "message")));
 		return -1;
-	}
+	}*/
 	return 0;
 }
 
@@ -103,7 +103,7 @@ account_commit (struct cld_account *account, void *data)
 
 struct cld_account *cld_client_add_account (struct cld_client *client, const char *type)
 {
-	struct cld_object *object;
+	/*struct cld_object *object;
 	
 	object = cld_object_create("make.account");
 	if (object == NULL)
@@ -129,13 +129,13 @@ struct cld_account *cld_client_add_account (struct cld_client *client, const cha
 		return NULL;
 	}
 	
-	return account;
+	return account;*/
 }
 
 static void
 fetch_accounts (struct cld_client *client)
 {
-	printf("fetching accounts\n");
+	/*printf("fetching accounts\n");
 	
 	struct cld_object *req = cld_object_create("request");
 	if (req == NULL)
@@ -165,7 +165,7 @@ fetch_accounts (struct cld_client *client)
 		struct cld_account *account = cld_account_create(cld_object_copy(cld_object_array_get(response, i)), account_commit, client);
 		cld_list_add(client->accounts, account);
 	}
-	cld_object_destroy(response);
+	cld_object_destroy(response);*/
 }
 
 struct cld_account *
@@ -193,7 +193,7 @@ cld_client_account_set (struct cld_client *client, struct cld_object *account)
 struct cld_object *
 cld_client_account_list (struct cld_client *client)
 {
-	struct cld_object *req = cld_object_create("request");
+	/*struct cld_object *req = cld_object_create("request");
 	if (req == NULL)
 		return NULL;
 	
@@ -208,5 +208,5 @@ cld_client_account_list (struct cld_client *client)
 	if (catch_error(__FUNCTION__, response) < 0)
 		return NULL;
 	
-	return response;
+	return response;*/
 }

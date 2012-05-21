@@ -23,7 +23,7 @@ cld_object_create (struct cld_object_manager *manager, unsigned char kind)
 	if (object == NULL)
 		return NULL;
 	
-	memset(manager, 0, sizeof *manager);
+	memset(object, 0, sizeof *object);
 	object->manager = manager;
 	object->kind = kind;
 	
@@ -50,7 +50,7 @@ cld_object_create_object (struct cld_object_manager *manager, const char *type)
 	if (object == NULL)
 		return NULL;
 	
-	object->kind = strdup(type);
+	object->type = strdup(type);
 	return object;
 }
 
@@ -106,7 +106,7 @@ cld_object_is_object (struct cld_object *object, const char *type)
 {
 	if (object->kind != CLD_TYPE_OBJECT)
 		return 0;
-	if (type == strcmp(object->type, type) != 0)
+	if (type && strcmp(object->type, type) != 0)
 		return 0;
 	return 1;
 }
@@ -269,12 +269,18 @@ struct cld_object *
 cld_object_at (struct cld_object *object, int index)
 {
 	assert(index >= 0 && index < object->num_fields && "trying to get field index out of bounds");
-	return object->fields[index].name;
+	return object->fields[index].object;
+}
+
+/** Returns the number of fields of this objects, i.e. the number of objects
+ * in the array. */
+int
+cld_object_count (struct cld_object *object)
+{
+	return object->num_fields;
 }
 
 
-
-//UNREVIEWED DEPRECATED STUFF
 static void
 print (struct cld_object *object, int indent)
 {
@@ -291,19 +297,19 @@ print (struct cld_object *object, int indent)
 	
 	//Strings
 	else if (cld_object_is_string(object)) {
-		printf("\"%s\"", object->str);
+		printf("\"%s\"", object->string);
 		return;
 	}
 	
 	//Arrays
 	else if (cld_object_is_array(object)) {
 		printf("[");
-		struct cld_field *field = object->field_head;
-		int i = 0;
-		while (field) {
+		int i;
+		int num = cld_object_count(object);
+		for (i = 0; i < num; i++) {
+			struct cld_object *v = cld_object_at(object, i);
 			printf("\n%s    %i = ", in, i++);
-			print(field->object, indent + 1);
-			field = field->next;
+			print(v, indent + 1);
 		}
 		printf("\n%s]", in);
 	}
@@ -311,11 +317,12 @@ print (struct cld_object *object, int indent)
 	//Objects
 	else {
 		printf("%s {", object->type);
-		struct cld_field *field = object->field_head;
-		while (field) {
+		int i;
+		int num = cld_object_count(object);
+		for (i = 0; i < num; i++) {
+			struct cld_object_field *field = &object->fields[i];
 			printf("\n%s    %s = ", in, field->name);
 			print(field->object, indent + 1);
-			field = field->next;
 		}
 		printf("\n%s}", in);
 	}
@@ -327,166 +334,4 @@ cld_object_print (struct cld_object *object)
 {
 	print(object, 0);
 	printf("\n");
-}
-
-/* Serializes the given object into the buffer. The object may be NULL. */
-static int
-serialize (struct cld_object *object, struct cld_buffer *buffer)
-{
-	int length = 0;
-	int offset = buffer->length;
-	cld_buffer_put(buffer, &length, sizeof length);
-	
-	if (object) {
-		cld_buffer_put(buffer, object->type, strlen(object->type) + 1);
-		
-		//Strings
-		if (cld_object_is_string(object)) {
-			cld_buffer_put(buffer, object->str, strlen(object->str) + 1);
-		}
-		
-		//Arrays
-		else if (cld_object_is_array(object)) {
-			struct cld_field *field = object->field_head;
-			while (field) {
-				serialize(field->object, buffer);
-				field = field->next;
-			}
-		}
-		
-		//Objects
-		else {
-			struct cld_field *field = object->field_head;
-			while (field) {
-				cld_buffer_put(buffer, field->name, strlen(field->name) + 1);
-				serialize(field->object, buffer);
-				field = field->next;
-			}
-		}
-	}
-	
-	//Fix the length of the object.
-	length = buffer->length - offset;
-	*(int *)(buffer->data + offset) = length;
-	
-	return 0;
-}
-
-/** Serializes the object and returns a pointer to a newly allocated region of
- * memory containing the object. The caller is responsible for freeing the re-
- * turned memory after usage. */
-struct cld_buffer *
-cld_object_serialize (struct cld_object *object)
-{
-	struct cld_buffer *buffer = cld_buffer_create();
-	if (buffer == NULL)
-		return NULL;
-	
-	if (serialize(object, buffer) < 0) {
-		cld_buffer_destroy(buffer);
-		return NULL;
-	}
-	
-	return buffer;
-}
-
-
-static struct cld_object *
-unserialize (const void **data, size_t length)
-{
-	const void *base = *data;
-	
-	if (length < sizeof(int)) {
-		fprintf(stderr, "%s: unexpected end of data\n", __FUNCTION__);
-		return NULL;
-	}
-	
-	int obj_length = *(int *)*data;
-	*data += sizeof(int);
-	if (obj_length > length) {
-		fprintf(stderr, "%s: object of %u bytes, but only %lu bytes left in the buffer\n", __FUNCTION__, obj_length, length);
-		return NULL;
-	}
-	
-	const char *type = *data;
-	for (; *(char *)*data != 0; (*data)++) {
-		if (*data - base >= length) {
-			fprintf(stderr, "%s: unexpected end of data when reading object type\n", __FUNCTION__);
-			return NULL;
-		}
-	}
-	(*data)++;
-	
-	//Unserialize Strings
-	if (strcmp(type, CLD_OBJECT_STRING_TYPE) == 0) {
-		const char *value = *data;
-		for (; *(char *)*data != 0; (*data)++) {
-			if (*data - base >= length) {
-				fprintf(stderr, "%s: unexpected end of data when reading string\n", __FUNCTION__);
-				return NULL;
-			}
-		}
-		(*data)++;
-		
-		return cld_object_create_string(value);
-	}
-	
-	//Unserialize Arrays
-	else if (strcmp(type, CLD_OBJECT_ARRAY_TYPE) == 0) {
-		struct cld_object *object = cld_object_create_array();
-		if (object == NULL)
-			return NULL;
-		
-		int i = 0;
-		while (*data - base < obj_length) {
-			struct cld_object *value = unserialize(data, length - (*data - base));
-			if (value == NULL) {
-				fprintf(stderr, "%s: unable to unserialize array element %i\n", __FUNCTION__, i);
-				cld_object_destroy(object);
-				return NULL;
-			}
-			i++;
-			cld_object_array_add(object, value);
-		}
-		
-		return object;
-	}
-	
-	//Unserialize Objects
-	else {
-		struct cld_object *object = cld_object_create(type);
-		if (object == NULL)
-			return NULL;
-		
-		while (*data - base < obj_length) {
-			const char *name = *data;
-			for (; *(char *)*data != 0; (*data)++) {
-				if (*data - base >= length) {
-					fprintf(stderr, "%s: unexpected end of data when reading field name in object %s\n", __FUNCTION__, type);
-					cld_object_destroy(object);
-					return NULL;
-				}
-			}
-			(*data)++;
-			
-			struct cld_object *value = unserialize(data, length - (*data - base));
-			if (value == NULL) {
-				fprintf(stderr, "%s: unable to unserialize field %s\n", __FUNCTION__, name);
-				cld_object_destroy(object);
-				return NULL;
-			}
-			
-			cld_object_set(object, name, value);
-		}
-		
-		return object;
-	}
-}
-
-/** Reconstructs the object from the given bytes. */
-struct cld_object *
-cld_object_unserialize (void *buffer, size_t length)
-{
-	const void *data = buffer;
-	return unserialize(&data, length);
 }

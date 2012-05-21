@@ -60,7 +60,7 @@ cloud_cmd_account_add (int argc, char *argv[])
 int
 cloud_cmd_account_list (int argc, char *argv[])
 {
-	struct cld_object *accounts = cld_client_account_list(cloud);
+	/*struct cld_object *accounts = cld_client_account_list(cloud);
 	if (accounts == NULL)
 		return -1;
 	
@@ -71,7 +71,7 @@ cloud_cmd_account_list (int argc, char *argv[])
 		printf("%s  %s  %s\n", cld_object_get_string(account, "uuid"), cld_object_get_string(account, "type"), cld_object_get_string(account, "identity"));
 	}
 	
-	cld_object_destroy(accounts);
+	cld_object_destroy(accounts);*/
 	return 0;
 }
 

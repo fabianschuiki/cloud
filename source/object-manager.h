@@ -6,7 +6,10 @@
 #define OBJECTMANAGER_H
 
 
+struct cld_object;
 struct cld_object_manager;
+struct cld_message;
+
 
 struct cld_object_manager *cld_object_manager_create ();
 void cld_object_manager_destroy (struct cld_object_manager *manager);

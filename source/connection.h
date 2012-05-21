@@ -23,6 +23,21 @@ enum {
 	CLD_MSG_COLLECTION_REMOVE
 };
 
+//TODO: new message container. Implement this.
+struct cld_message {
+	unsigned char op;
+	union {
+		struct {
+			int id;
+			char *type;
+		} obj;
+		struct {
+			int min;
+			int max;
+		} id;
+	};
+};
+
 
 struct cld_object;
 struct cld_buffer;
