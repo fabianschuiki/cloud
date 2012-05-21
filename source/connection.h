@@ -30,6 +30,7 @@ struct cld_message {
 		struct {
 			int id;
 			char *type;
+			struct cld_object *object;
 		} obj;
 		struct {
 			int min;
