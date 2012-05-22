@@ -12,6 +12,7 @@
 #include "fd-public.h"
 #include "buffer.h"
 #include "object.h"
+#include "message.h"
 
 
 struct cld_connection *
@@ -149,4 +150,23 @@ cld_connection_write (struct cld_connection *connection, struct cld_message *mes
 	cld_buffer_destroy(buffer);
 	
 	return 0;
+}
+
+/** Sends a sync message and consumes incoming messages until a sync message
+ * is received. */
+void
+cld_connection_sync (struct cld_connection *connection)
+{
+	struct cld_message *message = cld_message_create(CLD_MSG_SYNC);
+	cld_connection_write(connection, message);
+	cld_message_destroy(message);
+	
+	while (message = parse_message(connection)) {
+		if (message->op == CLD_MSG_SYNC) {
+			cld_message_destroy(message);
+			return;
+		}
+		connection->received(message, connection->data);
+		cld_message_destroy(message);
+	}
 }

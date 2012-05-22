@@ -9,6 +9,7 @@
 struct cld_object;
 struct cld_object_manager;
 struct cld_message;
+struct cld_connection;
 
 typedef int (*cld_object_manager_send_func_t) (struct cld_message *msg, void *data);
 
@@ -23,6 +24,8 @@ int cld_object_manager_handle (struct cld_object_manager *manager, struct cld_me
 
 void cld_object_manager_send_func (struct cld_object_manager *manager, cld_object_manager_send_func_t func, void *data);
 void cld_object_manager_send (struct cld_object_manager *manager, struct cld_message *message);
+
+void cld_object_manager_initiate_connection (struct cld_object_manager *manager, struct cld_connection *connection);
 
 
 #endif

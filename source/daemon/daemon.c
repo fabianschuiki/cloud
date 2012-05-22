@@ -236,11 +236,13 @@ accept_connection (struct cld_daemon *daemon, struct cld_socket *socket)
 		struct cld_client *client = cld_client_create(daemon, fd);
 		cld_list_add(daemon->clients, client);
 		cld_list_add(daemon->connections, client->connection);
+		cld_object_manager_initiate_connection(daemon->manager, client->connection);
 	}
 	else if (socket == daemon->service_socket) {
 		struct cld_service *service = cld_service_create(daemon, fd);
 		cld_list_add(daemon->services, service);
 		cld_list_add(daemon->connections, service->connection);
+		cld_object_manager_initiate_connection(daemon->manager, service->connection);
 	}
 	else {
 		assert(0 && "socket not part of daemon");

@@ -8,6 +8,7 @@
 
 struct cld_socket;
 struct cld_list;
+struct cld_connection;
 struct cld_message;
 
 struct cld_client;

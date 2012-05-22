@@ -61,6 +61,8 @@ cld_client_create ()
 		return NULL;
 	}
 	
+	cld_connection_sync(client->connection);
+	
 	return client;
 }
 

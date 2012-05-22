@@ -103,13 +103,17 @@ cld_message_print (struct cld_message *message)
 {
 	const char *op = NULL;
 	switch (message->op) {
+		OPCASE(SYNC)
 		OPCASE(ADVERTISE)
 		OPCASE(DESTROYED)
 	}
 	
 	printf("%s", op);
 	
-	if (message->op < _CLD_MSG_MAX_TYPE_ID) {
+	if (message->op < _CLD_MSG_MAX_TYPE_SYNC) {
+		printf(" %i", message->sync);
+	}
+	else if (message->op < _CLD_MSG_MAX_TYPE_ID) {
 		printf(" %i .. %i", message->id.min, message->id.max);
 	}
 	else if (message->op < _CLD_MSG_MAX_TYPE_OBJ) {

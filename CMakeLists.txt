@@ -3,3 +3,4 @@ project (cloud)
 
 add_subdirectory (protocol)
 add_subdirectory (source)
+add_subdirectory (test)

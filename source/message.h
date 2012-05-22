@@ -11,6 +11,11 @@
 struct cld_buffer;
 
 enum {
+	CLD_MSG_SYNC,
+	
+	_CLD_MSG_MAX_TYPE_SYNC,
+	
+	
 	CLD_MSG_REQUEST_ID_RANGE,
 	CLD_MSG_ID_RANGE,
 	
@@ -33,6 +38,7 @@ struct cld_message {
 	unsigned char op;
 	struct cld_connection *connection;
 	union {
+		int sync;
 		struct {
 			int id;
 			char *type;

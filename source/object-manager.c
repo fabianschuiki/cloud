@@ -111,6 +111,7 @@ cld_object_pool_add (struct cld_object_pool *pool, struct cld_object *object)
 	memcpy(&pool->entries[index + 1], &pool->entries[index], pool->count - index);
 	pool->entries[index].id = object->id;
 	pool->entries[index].object = object;
+	pool->count++;
 }
 
 /** Removes the given object from the pool. Does nothing if the object is not
@@ -273,4 +274,19 @@ void
 cld_object_manager_send (struct cld_object_manager *manager, struct cld_message *message)
 {
 	manager->send(message, manager->send_data);
+}
+
+void
+cld_object_manager_initiate_connection (struct cld_object_manager *manager, struct cld_connection *connection)
+{
+	printf("initiating connection %p\n", connection);
+	int i;
+	for (i = 0; i < manager->local->count; i++) {
+		struct cld_object_pool_entry *entry = &manager->local->entries[i];
+		printf("- advertizing %d\n", entry->id);
+		struct cld_message *msg = cld_message_create_advertise(entry->id, entry->object->type);
+		msg->connection = connection;
+		cld_object_manager_send(manager, msg);
+		cld_message_destroy(msg);
+	}
 }

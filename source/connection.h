@@ -40,6 +40,7 @@ int cld_connection_write (struct cld_connection *connection, struct cld_message 
 
 //int cld_connection_write_blocking (struct cld_connection *connection, struct cld_object *object);
 //struct cld_object *cld_connection_read_blocking (struct cld_connection *connection);
+void cld_connection_sync (struct cld_connection *connection);
 
 
 #endif
