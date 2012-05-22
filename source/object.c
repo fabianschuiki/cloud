@@ -27,7 +27,6 @@ cld_object_create (struct cld_object_manager *manager, unsigned char kind)
 	object->manager = manager;
 	object->kind = kind;
 	
-	cld_object_manager_add(manager, object);
 	return object;
 }
 
@@ -51,6 +50,8 @@ cld_object_create_object (struct cld_object_manager *manager, const char *type)
 		return NULL;
 	
 	object->type = strdup(type);
+	cld_object_manager_add(manager, object);
+	
 	return object;
 }
 
@@ -62,13 +63,21 @@ cld_object_create_string (struct cld_object_manager *manager, const char *string
 		return NULL;
 	
 	object->string = strdup(string);
+	cld_object_manager_add(manager, object);
+	
 	return object;
 }
 
 struct cld_object *
 cld_object_create_array (struct cld_object_manager *manager)
 {
-	return cld_object_create(manager, CLD_TYPE_ARRAY);
+	struct cld_object *object = cld_object_create(manager, CLD_TYPE_ARRAY);
+	if (object == NULL)
+		return NULL;
+	
+	cld_object_manager_add(manager, object);
+	
+	return object;
 }
 
 

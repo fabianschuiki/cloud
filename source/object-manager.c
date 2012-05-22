@@ -10,6 +10,7 @@
 #include "object-manager.h"
 #include "object.h"
 #include "connection.h"
+#include "message.h"
 
 
 struct cld_object_pool_entry {
@@ -201,12 +202,9 @@ cld_object_manager_add (struct cld_object_manager *manager, struct cld_object *o
 	printf("added %x\n", object->id);
 	
 	//Advertize the object.
-	struct cld_message msg;
-	msg.op = CLD_MSG_ADVERTISE;
-	msg.connection = NULL;
-	msg.obj.id = object->id;
-	msg.obj.type = object->type;
-	cld_object_manager_send(manager, &msg);
+	struct cld_message *msg = cld_message_create_advertise(object->id, object->type);
+	cld_object_manager_send(manager, msg);
+	cld_message_destroy(msg);
 }
 
 /** Removes an object created locally from the object manager. */
@@ -214,11 +212,9 @@ void
 cld_object_manager_remove (struct cld_object_manager *manager, int id)
 {
 	//Publish object deletion.
-	struct cld_message msg;
-	msg.op = CLD_MSG_DESTROYED;
-	msg.connection = NULL;
-	msg.obj.id = id;
-	cld_object_manager_send(manager, &msg);
+	struct cld_message *msg = cld_message_create_destroyed(id);
+	cld_object_manager_send(manager, msg);
+	cld_message_destroy(msg);
 	
 	cld_object_pool_remove(manager->local, id);
 	cld_object_pool_remove(manager->objects, id);

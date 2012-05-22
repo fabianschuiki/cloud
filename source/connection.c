@@ -14,25 +14,6 @@
 #include "object.h"
 
 
-struct cld_buffer *
-cld_message_serialize (struct cld_message *message)
-{
-	struct cld_buffer *buffer = cld_buffer_create();
-	if (buffer == 0)
-		return NULL;
-	
-	cld_buffer_put(buffer, &message->op, sizeof message->op);
-	
-	return buffer;
-}
-
-struct cld_message *
-cld_message_unserialize (void *data, size_t length)
-{
-	return NULL;
-}
-
-
 struct cld_connection *
 cld_connection_create (int fd, cld_connection_received_func_t received, cld_connection_disconnected_func_t disconnected, void *data)
 {
@@ -159,9 +140,13 @@ cld_connection_write (struct cld_connection *connection, struct cld_message *mes
 	struct cld_buffer *buffer = cld_message_serialize(message);
 	if (buffer == NULL)
 		return -1;
+	int length = buffer->length;
 	
+	cld_buffer_put(connection->outbuf, &length, sizeof length);
 	cld_buffer_put(connection->outbuf, buffer->data, buffer->length);
 	connection->mask |= CLD_FD_WRITE;
+	
+	cld_buffer_destroy(buffer);
 	
 	return 0;
 }

@@ -32,12 +32,12 @@ socket_data (int fd, int mask, void *data)
 
 /** Called by the service's connection whenever a message is received. */
 static int
-connection_received (struct cld_object *object, void *data)
+connection_received (struct cld_message *message, void *data)
 {
 	struct cld_service *service = data;
 	printf("service %p sent ", service);
-	cld_object_print(object);
-	cld_object_destroy(object);
+	//cld_object_print(object);
+	//cld_object_destroy(object);
 	
 	/*switch (op) {
 		case CLD_OP_SERVICE_RECORD: {

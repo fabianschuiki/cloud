@@ -28,11 +28,11 @@ socket_data (int fd, int mask, void *data)
 }*/
 
 static int
-connection_received (struct cld_object *object, void *data)
+connection_received (struct cld_message *message, void *data)
 {
 	struct cld_service *daemon = data;
 	printf("daemon %p sent ", daemon);
-	cld_object_print(object);
+	//cld_object_print(object);
 	return 1;
 }
 

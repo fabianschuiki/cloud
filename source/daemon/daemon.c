@@ -24,6 +24,7 @@
 #include "../fd-public.h"
 #include "../list.h"
 #include "../connection.h"
+#include "../message.h"
 #include "../object.h"
 #include "../object-manager.h"
 #include "../buffer.h"
@@ -126,7 +127,9 @@ int
 cld_daemon_send_message (struct cld_message *msg, void *data)
 {
 	struct cld_daemon *daemon = data;
-	printf("sending message %x...\n", msg->op);
+	printf("sending message ");
+	cld_message_print(msg);
+	printf("\n");
 	
 	if (msg->connection != NULL)
 		return cld_connection_write(msg->connection, msg);

@@ -35,12 +35,14 @@ add_executable (cloudd
 	object-manager.c
 	buffer.c
 	list.c
-	connection.c)
+	connection.c
+	message.c)
 
 add_library (cloud
 	client/client.c
 	socket.c
 	connection.c
+	message.c
 	run-loop.c
 	object.c
 	object-manager.c
@@ -54,6 +56,7 @@ add_library (cloud-service
 	socket.c
 	run-loop.c
 	connection.c
+	message.c
 	object.c
 	object-manager.c
 	buffer.c)
